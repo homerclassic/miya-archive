@@ -1,0 +1,506 @@
+/* Page skeleton: left navigation, centre column, right column, sticky header, tabs and list sentinels. */
+
+#app {
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+nav {
+  width: 275px;
+  padding: 4px 12px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+nav>a,
+nav>label {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  color: var(--tx);
+  font-size: 20px;
+  padding: 12px;
+  border-radius: 30px;
+  width: fit-content;
+  cursor: pointer;
+}
+
+nav>a:hover,
+nav>label:hover {
+  background: var(--hv);
+  text-decoration: none;
+}
+
+nav>a.on {
+  font-weight: 700;
+}
+
+nav>a.lg {
+  padding: 10px 12px;
+}
+
+.acct {
+  margin-top: auto;
+  margin-bottom: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 30px;
+}
+
+.acct:hover {
+  background: var(--hv);
+}
+
+.acct b {
+  display: block;
+}
+
+main {
+  width: 600px;
+  max-width: 100%;
+  border: solid var(--bd);
+  border-width: 0 1px;
+  min-height: 100vh;
+}
+
+aside {
+  width: 350px;
+  padding: 8px 16px;
+  align-self: flex-start;
+}
+
+@media (min-height: 800px) {
+  aside {
+    position: sticky;
+    top: 0;
+  }
+}
+
+.nsr {
+  display: none;
+}
+
+@media (max-width: 1004px) {
+  .nsr {
+    display: flex;
+  }
+}
+
+.nar {
+  display: none;
+}
+
+@media (max-width: 1004px) {
+  .nar {
+    display: block;
+  }
+}
+
+@media (max-width: 1264px) {
+  nav {
+    width: 88px;
+  }
+
+  nav .t,
+  .acct .ai {
+    display: none;
+  }
+
+  nav>a,
+  nav>label {
+    padding: 12px;
+  }
+}
+
+@media (max-width: 1004px) {
+  aside {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  nav {
+    position: fixed;
+    inset: auto 0 0 0;
+    width: 100%;
+    height: 53px;
+    flex-direction: row;
+    justify-content: space-around;
+    background: var(--bg);
+    border-top: 1px solid var(--bd);
+    z-index: 9;
+    padding: 0;
+  }
+
+  nav>a.lg,
+  .acct {
+    display: none;
+  }
+
+  main {
+    padding-bottom: 60px;
+    border: 0;
+  }
+}
+
+.hd0 {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  padding: 0 16px;
+  height: 53px;
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.hd0::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: var(--ph,100%);
+  z-index: -1;
+  pointer-events: none;
+  background: color-mix(in srgb,var(--bg) 82%,transparent);
+  backdrop-filter: blur(12px);
+}
+
+.hd0 b {
+  font-size: 20px;
+  font-weight: 800;
+  display: block;
+  line-height: 24px;
+}
+
+.hd0 small {
+  color: var(--mu);
+  font-size: 13px;
+}
+
+.bk {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-left: -8px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.bk:hover {
+  background: var(--hv);
+}
+
+.stub {
+  color: var(--mu);
+  font-size: 14px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--bd);
+}
+
+.tabs2 {
+  display: flex;
+  border-bottom: 1px solid var(--bd);
+  position: sticky;
+  top: 53px;
+  z-index: 6;
+}
+
+.tabs2 a {
+  flex: 1 1 0;
+  text-align: center;
+  padding: 15px 4px;
+  font-size: 14px;
+  color: var(--mu);
+  font-weight: 600;
+  position: relative;
+  white-space: nowrap;
+}
+
+.tabs2 a:hover {
+  background: var(--hv);
+  text-decoration: none;
+}
+
+.tabs2 a.on {
+  color: var(--tx);
+  font-weight: 800;
+}
+
+.tabs2 a.on::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  height: 4px;
+  width: 56px;
+  border-radius: 2px;
+  background: var(--ac);
+}
+
+.bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--bd);
+  color: var(--mu);
+  font-size: 14px;
+}
+
+.hd0>div {
+  min-width: 0;
+}
+
+.hd0 b {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.acct {
+  max-width: 100%;
+}
+
+.acct .ai {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.acct b {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tabs2 {
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabs2::-webkit-scrollbar {
+  display: none;
+}
+
+.tabs2 a {
+  flex: 1 0 auto;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.tabs2 a {
+  padding: 16px 6px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.tabs2 a.on {
+  font-weight: 700;
+}
+
+main {
+  background: var(--bg);
+}
+
+nav,
+.hd0,
+.tabs2,
+.ac,
+.bar,
+.rtl,
+.av,
+.ban,
+button,
+.chip,
+summary,
+.sc,
+#shm,
+#toast,
+#sidecard,
+.cl,
+.more,
+.rhd,
+.pm svg,
+.bk {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+main {
+  min-width: 0;
+}
+
+nav .im,
+.mav,
+#dr,
+#drb {
+  display: none;
+}
+
+@media (max-width: 1004px) {
+  nav .id {
+    display: none;
+  }
+
+  nav .im {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 700px) {
+  main {
+    width: 100%;
+    border: 0;
+    padding-bottom: calc(53px + env(safe-area-inset-bottom,0px));
+  }
+
+  nav {
+    height: calc(53px + env(safe-area-inset-bottom,0px));
+    padding: 0 0 env(safe-area-inset-bottom,0px);
+    gap: 0;
+    justify-content: stretch;
+    background: color-mix(in srgb,var(--bg) 88%,transparent);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+  }
+
+  nav>a {
+    flex: 1;
+    justify-content: center;
+    width: auto;
+    height: 53px;
+    padding: 0;
+    border-radius: 0;
+  }
+
+  nav>a:hover {
+    background: none;
+  }
+
+  nav>#rd,
+  nav>#kt,
+  nav>#th {
+    display: none;
+  }
+
+  nav>a[data-n=""] {
+    order: 1;
+  }
+
+  nav>a.nsr {
+    order: 2;
+  }
+
+  nav>a[data-n=tweets] {
+    order: 3;
+  }
+
+  nav>a[data-n=history] {
+    order: 4;
+  }
+
+  nav>a.on svg[fill=currentColor] path {
+    stroke: currentColor;
+    stroke-width: 1.1;
+  }
+
+  nav>a.on svg:not([fill=currentColor]) {
+    stroke-width: 2.5;
+  }
+
+  .hd0 {
+    gap: 28px;
+  }
+
+  .hd0 b {
+    font-size: 20px;
+  }
+
+  .tabs2 a {
+    flex: 1 0 auto;
+  }
+
+  nav,
+  .hd0,
+  .tabs2 {
+    transition: transform .28s cubic-bezier(.2,.8,.2,1),top .28s cubic-bezier(.2,.8,.2,1);
+  }
+
+  .hd0::before {
+    transition: opacity .28s;
+  }
+
+  #app {
+    padding-left: env(safe-area-inset-left,0px);
+    padding-right: env(safe-area-inset-right,0px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  nav,
+  .hd0,
+  .tabs2 {
+    transition: none;
+  }
+}
+
+@media (hover: none) {
+  nav>a:active,
+  .tabs2 a:active,
+  .bk:active,
+  .row:active {
+    background: var(--hv);
+  }
+}
+
+/* desktop: no 'Home' header bar above the For you / Threads tabs */
+
+@media (min-width: 701px) {
+  .hd0.hh {
+    display: none;
+  }
+
+  .hh+.tabs2 {
+    top: 0;
+  }
+}
+
+/* tabs sitting under the top bar share the bar's glass (glass() stretches it behind them), so bar + tabs are one seamless surface; tabs get their own glass only when they stand alone */
+
+.hh+.tabs2 {
+  background: color-mix(in srgb,var(--bg) 82%,transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+/* mobile: History lives only in the side menu */
+
+@media (max-width: 700px) {
+  nav>a.nhs {
+    display: none!important;
+  }
+}
+
+/* profile: once scrolled past the name, the top bar swaps the avatar for a back arrow and gains a search-this-account button, and stays visible */
+
+.hd0 .hsr {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .hd0.pfh .bk {
+    display: none;
+  }
+}

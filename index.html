@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="color-scheme" content="light">
+  <title>Miya Archive</title>
+  <link rel="icon" href="assets/favicon.jpg" type="image/jpeg">
+
+  <!-- Start downloading the archive immediately; js/app.js fetch() reuses this request. -->
+  <link rel="preload" href="data/tweets.md" as="fetch" crossorigin>
+  <link rel="modulepreload" href="js/main.js">
+
+  <!-- Applies saved preferences before first paint so there is no flash (reader mode, quick search). -->
+  <script>
+    document.documentElement.dataset.t = 'light';
+    try {
+      if (localStorage.r == '1') document.documentElement.dataset.r = '1';
+      if (localStorage.k != '1') document.documentElement.dataset.k = '0';
+    } catch (e) {}
+  </script>
+
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/tweet.css">
+  <link rel="stylesheet" href="css/media.css">
+  <link rel="stylesheet" href="css/embeds.css">
+  <link rel="stylesheet" href="css/forms.css">
+  <link rel="stylesheet" href="css/profile.css">
+  <link rel="stylesheet" href="css/lightbox.css">
+  <link rel="stylesheet" href="css/share-toast.css">
+  <link rel="stylesheet" href="css/drawer.css">
+  <link rel="stylesheet" href="css/reader-mode.css">
+  <link rel="stylesheet" href="css/pull-to-refresh.css">
+  <link rel="stylesheet" href="css/print.css">
+  <link rel="stylesheet" href="css/skeleton.css">
+</head>
+<body>
+  <!--
+    The shell below is a static skeleton shown while the script and data load.
+    js/ui/shell.js replaces #nav and #aside, and every page renderer replaces the contents of #main.
+  -->
+  <div id="app">
+    <nav id="nav" aria-hidden="true">
+      <div class="sk sk-nav-item"></div><div class="sk sk-nav-item"></div><div class="sk sk-nav-item"></div><div class="sk sk-nav-item"></div>
+    </nav>
+    <main id="main" aria-busy="true">
+      <div class="sk-head"><div class="sk sk-line" style="width:120px;height:18px"></div></div>
+      <div class="sk-list" role="status" aria-label="Loading"><div class="sk-tweet" aria-hidden="true"><div class="sk sk-av"></div><div class="sk-body"><div class="sk sk-line" style="width:38%"></div><div class="sk sk-line" style="width:96%"></div><div class="sk sk-line" style="width:82%"></div><div class="sk sk-line" style="width:54%"></div></div></div><div class="sk-tweet" aria-hidden="true"><div class="sk sk-av"></div><div class="sk-body"><div class="sk sk-line" style="width:38%"></div><div class="sk sk-line" style="width:96%"></div><div class="sk sk-line" style="width:82%"></div><div class="sk sk-line" style="width:54%"></div></div></div><div class="sk-tweet" aria-hidden="true"><div class="sk sk-av"></div><div class="sk-body"><div class="sk sk-line" style="width:38%"></div><div class="sk sk-line" style="width:96%"></div><div class="sk sk-line" style="width:82%"></div><div class="sk sk-line" style="width:54%"></div></div></div><div class="sk-tweet" aria-hidden="true"><div class="sk sk-av"></div><div class="sk-body"><div class="sk sk-line" style="width:38%"></div><div class="sk sk-line" style="width:96%"></div><div class="sk sk-line" style="width:82%"></div><div class="sk sk-line" style="width:54%"></div></div></div><div class="sk-tweet" aria-hidden="true"><div class="sk sk-av"></div><div class="sk-body"><div class="sk sk-line" style="width:38%"></div><div class="sk sk-line" style="width:96%"></div><div class="sk sk-line" style="width:82%"></div><div class="sk sk-line" style="width:54%"></div></div></div><div class="sk-tweet" aria-hidden="true"><div class="sk sk-av"></div><div class="sk-body"><div class="sk sk-line" style="width:38%"></div><div class="sk sk-line" style="width:96%"></div><div class="sk sk-line" style="width:82%"></div><div class="sk sk-line" style="width:54%"></div></div></div></div>
+    </main>
+    <aside id="side" aria-hidden="true"><div class="sk sk-search"></div></aside>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

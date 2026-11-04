@@ -1,0 +1,74 @@
+/* Print layout used by the "Download thread as PDF" fallback. */
+
+#pp {
+  display: none;
+}
+
+@page {
+  size:A4;margin:20mm 18mm 22mm
+}
+
+@media print {
+  #pp {
+    display: block;
+    color: #111;
+    font: 11.5pt/1.7 Georgia,"Times New Roman","Noto Serif",serif;
+  }
+
+  #pp h1 {
+    font: 700 22pt/1.25 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    margin: 0 0 6pt;
+    break-after: avoid;
+    overflow-wrap: anywhere;
+  }
+
+  #pp .ppm {
+    font: 10.5pt/1.4 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    color: #536471;
+  }
+
+  #pp hr {
+    border: 0;
+    border-top: 1px solid #ccd6dd;
+    margin: 12pt 0 18pt;
+  }
+
+  #pp p {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    margin: 0 0 10pt;
+    orphans: 3;
+    widows: 3;
+  }
+
+  #pp .ppq {
+    font: 9.5pt/1.4 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    color: #657786;
+    border-left: 2pt solid #ccd6dd;
+    padding-left: 8pt;
+  }
+
+  #pp .ppf {
+    text-align: center;
+    margin: 8pt 0 14pt;
+    break-inside: avoid;
+  }
+
+  #pp .ppf img {
+    display: inline-block;
+    vertical-align: top;
+    max-width: 100%;
+    max-height: 3.3in;
+    width: auto;
+    height: auto;
+    margin: 0 3pt 6pt;
+    border-radius: 4pt;
+  }
+
+  #pp .ppf.n2 img,
+  #pp .ppf.n3 img,
+  #pp .ppf.n4 img {
+    max-width: calc(50% - 8pt);
+    max-height: 2.7in;
+  }
+}

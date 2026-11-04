@@ -1,0 +1,114 @@
+/* Mobile slide-out menu. */
+
+@media (max-width: 700px) {
+  .mav {
+    display: block;
+    flex: none;
+    cursor: pointer;
+  }
+
+  .mav .av {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  #drb {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    background: rgba(0,0,0,.45);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .2s;
+  }
+
+  #dr {
+    display: block;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 300px;
+    max-width: 84vw;
+    z-index: 81;
+    background: var(--bg);
+    color: var(--tx);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 16px 0 calc(16px + env(safe-area-inset-bottom,0px));
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition: transform .22s,visibility .22s;
+    box-shadow: 0 0 18px rgba(0,0,0,.35);
+  }
+
+  #dr .drp {
+    padding: 0 16px 12px;
+  }
+
+  #dr .drp .av {
+    margin-bottom: 10px;
+  }
+
+  #dr .drn {
+    display: block;
+    font-size: 20px;
+    line-height: 24px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+  }
+
+  #dr .drc {
+    margin-top: 10px;
+    font-size: 14px;
+  }
+
+  #dr .drc b {
+    color: var(--tx);
+  }
+
+  #dr a {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: var(--tx);
+    font-size: 20px;
+    line-height: 24px;
+    font-weight: 700;
+    padding: 14px 16px;
+    cursor: pointer;
+  }
+
+  #dr a:hover {
+    text-decoration: none;
+    background: var(--hv);
+  }
+
+  #dr .drsep {
+    height: 1px;
+    background: var(--bd);
+    margin: 8px 0;
+  }
+
+  #dr .drs2 a {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  #dr .drs2 a>span:not(.sw2) {
+    flex: 1;
+  }
+
+  #dr .sw2 {
+    margin-left: auto;
+  }
+}
+
+@media (min-width: 701px) {
+  #dr,
+  #drb {
+    display: none!important;
+  }
+}

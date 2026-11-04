@@ -1,0 +1,48 @@
+/* Touch pull-to-refresh indicator. */
+
+#ptr {
+  position: fixed;
+  top: 53px;
+  left: 50%;
+  z-index: 30;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--ac);
+  box-shadow: 0 1px 6px rgba(0,0,0,.3);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%,-60px);
+}
+
+#ptr.rs {
+  transition: transform .22s,opacity .22s;
+}
+
+#ptr.sp svg {
+  animation: ptrspin .7s linear infinite;
+}
+
+@keyframes ptrspin {
+  to{transform:rotate(360deg)}
+}
+
+/* pull-to-refresh ring (X style) */
+
+#ptr {
+  width: 40px;
+  height: 40px;
+}
+
+#ptr .pc {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+
+#ptr.sp .pc {
+  stroke-dasharray: 75 100;
+  stroke-dashoffset: 0!important;
+}

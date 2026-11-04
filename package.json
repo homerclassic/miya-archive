@@ -1,0 +1,17 @@
+{
+  "name": "miya-archive",
+  "version": "1.0.0",
+  "private": true,
+  "license": "SEE LICENSE IN LICENSE",
+  "type": "module",
+  "description": "Static viewer for an exported tweet archive (no framework, plain ES modules).",
+  "scripts": {
+    "dev": "node scripts/serve.mjs .",
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/serve.mjs dist",
+    "standalone": "node scripts/standalone.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}
