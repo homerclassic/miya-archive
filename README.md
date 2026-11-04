@@ -4,7 +4,7 @@ The tweet archive of **Miya Black Hearted Cyber Angel Baby** (@BPD_GOD): every t
 
 ## Use it
 
-The easiest way is the standalone build: a single zip download, no setup, no terminal, no server. Get the latest version from the Releases page, unzip it, and open `miya-archive-standalone.html`.
+The easiest way is the standalone build: a single zip download, no setup, no terminal, no server. Get the latest version from the [Releases page](https://github.com/homerclassic/miya-archive/releases), unzip it, and open `miya-archive-standalone.html`.
 
 ## Features
 
