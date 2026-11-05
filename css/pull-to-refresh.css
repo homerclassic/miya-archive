@@ -46,3 +46,19 @@
   stroke-dasharray: 75 100;
   stroke-dashoffset: 0!important;
 }
+
+/* Centred loading spinner for first paint: the same ring as pull-to-refresh,
+   shown while the archive loads instead of a "Loading…" line. */
+.spin-loader {
+  display: grid;
+  place-items: center;
+  padding: 64px 0;
+  color: var(--ac);
+}
+.spin-loader svg {
+  animation: ptrspin .7s linear infinite;
+}
+.spin-loader .pc {
+  stroke-dasharray: 75 100;
+  stroke-dashoffset: 0;
+}

@@ -40,7 +40,7 @@ function loadArchive(txt) {
  * Fetch data/tweets.md, parse it and render the first route.
  */
 export function startApp() {
-    main.innerHTML = '<div class="more">Loading…</div>';
+    main.innerHTML = '<div class="spin-loader" role="status" aria-label="Loading"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle class="pc" cx="12" cy="12" r="9" pathLength="100"/></svg></div>';
     fetch(DATA_URL).then(r => {
         if (!r.ok)
             throw new Error('HTTP ' + r.status);
