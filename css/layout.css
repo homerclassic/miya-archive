@@ -40,6 +40,22 @@ nav>a.on {
   font-weight: 700;
 }
 
+/* nav icons: outline by default, filled only on the page you're on (the router toggles .on) */
+#nav a .ic-f,
+#dr a .ic-f {
+  display: none;
+}
+
+#nav a.on .ic-o,
+#dr a.on .ic-o {
+  display: none;
+}
+
+#nav a.on .ic-f,
+#dr a.on .ic-f {
+  display: inline;
+}
+
 nav>a.lg {
   padding: 10px 12px;
 }
@@ -407,11 +423,6 @@ nav .im,
 
   nav>a[data-n=history] {
     order: 4;
-  }
-
-  nav>a.on svg[fill=currentColor] path {
-    stroke: currentColor;
-    stroke-width: 1.1;
   }
 
   nav>a.on svg:not([fill=currentColor]) {

@@ -3,7 +3,7 @@
  */
 
 import { $, escapeHtml } from '../core/dom.js';
-import { ICONS, ICON_BOOKMARK_PATH, ICON_HOME_PATH, ICON_PROFILE_PATH, ICON_SEARCH_PATH, filledIcon, icon } from '../core/icons.js';
+import { ICONS, ICON_BOOKMARK_FILLED_PATH, ICON_BOOKMARK_PATH, ICON_HOME_OUTLINE_PATH, ICON_HOME_PATH, ICON_PROFILE_OUTLINE_PATH, ICON_PROFILE_PATH, ICON_SEARCH_OUTLINE_PATH, ICON_SEARCH_PATH, filledIcon, icon } from '../core/icons.js';
 import { displayName } from '../core/identity.js';
 import { state } from '../core/state.js';
 import { openAdvancedSearch } from '../search/advanced-modal.js';
@@ -18,7 +18,7 @@ import { updateGlass } from './glass.js';
 export function renderShell() {
     const D = document.documentElement.dataset;
     document.title = 'Miya Archive';
-    $('#nav').innerHTML = `<a class="lg" href="#/">${avatar('s')}</a><a href="#/" data-n="">${filledIcon(ICON_HOME_PATH, 26)}<span class="t">Home</span></a><a href="#/tweets" data-n="tweets">${filledIcon(ICON_PROFILE_PATH, 26)}<span class="t">Tweets</span></a><a class="nhs" href="#/history" data-n="history">${filledIcon(ICON_BOOKMARK_PATH)}<span class="t">History</span></a><a class="nsr" href="#/search/" data-n="search">${filledIcon(ICON_SEARCH_PATH, 24)}<span class="t">Search</span></a><a id="rd" class="rdb" role="switch" tabindex="0" aria-checked="false" title="Reader mode">${icon(ICONS.read, 26)}<span class="t">Reader</span><span class="sw2 t"></span></a><a id="kt" class="ktb" role="switch" tabindex="0" aria-checked="true" title="Click any frequent word in a tweet to search for it">${icon(ICONS.kw, 26)}<span class="t">Quick search</span><span class="sw2 t"></span></a>`;
+    $('#nav').innerHTML = `<a class="lg" href="#/">${avatar('s')}</a><a href="#/" data-n="">${filledIcon(ICON_HOME_OUTLINE_PATH, 26, 'ic-o')}${filledIcon(ICON_HOME_PATH, 26, 'ic-f')}<span class="t">Home</span></a><a href="#/tweets" data-n="tweets">${filledIcon(ICON_PROFILE_OUTLINE_PATH, 26, 'ic-o')}${filledIcon(ICON_PROFILE_PATH, 26, 'ic-f')}<span class="t">Tweets</span></a><a class="nhs" href="#/history" data-n="history">${filledIcon(ICON_BOOKMARK_PATH, 26, 'ic-o')}${filledIcon(ICON_BOOKMARK_FILLED_PATH, 26, 'ic-f')}<span class="t">History</span></a><a class="nsr" href="#/search/" data-n="search">${filledIcon(ICON_SEARCH_OUTLINE_PATH, 24, 'ic-o')}${filledIcon(ICON_SEARCH_PATH, 24, 'ic-f')}<span class="t">Search</span></a><a id="rd" class="rdb" role="switch" tabindex="0" aria-checked="false" title="Reader mode">${icon(ICONS.read, 26)}<span class="t">Reader</span><span class="sw2 t"></span></a><a id="kt" class="ktb" role="switch" tabindex="0" aria-checked="true" title="Click any frequent word in a tweet to search for it">${icon(ICONS.kw, 26)}<span class="t">Quick search</span><span class="sw2 t"></span></a>`;
     // Mobile: tapping the Search nav icon while already on the search page focuses the search field (opens the keyboard).
     document.querySelector('#nav a[data-n="search"]').addEventListener('click', e => {
         if (!matchMedia('(pointer:coarse)').matches)
@@ -38,7 +38,7 @@ export function renderShell() {
     dr.id = 'dr';
     dr.setAttribute('role', 'dialog');
     dr.setAttribute('aria-label', 'Menu');
-    dr.innerHTML = `<div class="drp">${avatar('s')}<b class="drn">${escapeHtml(displayName())}</b><div class="mu">@${escapeHtml(state.ownerHandle)}</div><div class="mu drc"><b>${state.tweets.length.toLocaleString()}</b> posts</div></div><div class="drl"><a href="#/">${filledIcon(ICON_HOME_PATH, 26)}Home</a><a href="#/tweets">${filledIcon(ICON_PROFILE_PATH, 26)}Tweets</a><a href="#/search/">${filledIcon(ICON_SEARCH_PATH, 24)}Search</a><a href="#/history">${filledIcon(ICON_BOOKMARK_PATH)}History</a></div><div class="drsep"></div><div class="drl drs2"><a class="rdb" role="switch" tabindex="0" aria-checked="false">${icon(ICONS.read, 26)}<span>Reader mode</span><span class="sw2"></span></a><a class="ktb" role="switch" tabindex="0" aria-checked="true">${icon(ICONS.kw, 26)}<span>Quick search</span><span class="sw2"></span></a></div>`;
+    dr.innerHTML = `<div class="drp">${avatar('s')}<b class="drn">${escapeHtml(displayName())}</b><div class="mu">@${escapeHtml(state.ownerHandle)}</div><div class="mu drc"><b>${state.tweets.length.toLocaleString()}</b> posts</div></div><div class="drl"><a href="#/" data-n="">${filledIcon(ICON_HOME_OUTLINE_PATH, 26, 'ic-o')}${filledIcon(ICON_HOME_PATH, 26, 'ic-f')}Home</a><a href="#/tweets" data-n="tweets">${filledIcon(ICON_PROFILE_OUTLINE_PATH, 26, 'ic-o')}${filledIcon(ICON_PROFILE_PATH, 26, 'ic-f')}Tweets</a><a href="#/search/" data-n="search">${filledIcon(ICON_SEARCH_OUTLINE_PATH, 24, 'ic-o')}${filledIcon(ICON_SEARCH_PATH, 24, 'ic-f')}Search</a><a href="#/history" data-n="history">${filledIcon(ICON_BOOKMARK_PATH, 26, 'ic-o')}${filledIcon(ICON_BOOKMARK_FILLED_PATH, 26, 'ic-f')}History</a></div><div class="drsep"></div><div class="drl drs2"><a class="rdb" role="switch" tabindex="0" aria-checked="false">${icon(ICONS.read, 26)}<span>Reader mode</span><span class="sw2"></span></a><a class="ktb" role="switch" tabindex="0" aria-checked="true">${icon(ICONS.kw, 26)}<span>Quick search</span><span class="sw2"></span></a></div>`;
     dr.onclick = e => {
         const a = e.target.closest('a');
         if (!a)

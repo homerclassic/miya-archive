@@ -23,7 +23,7 @@ export function handleRoute(fresh) {
     const h = decodeURIComponent(location.hash.slice(2));
     const [a, ...r] = h.split('/');
     const b = r.join('/');
-    document.querySelectorAll('nav a[data-n]').forEach(x => x.classList.toggle('on', x.dataset.n == navKey(a)));
+    document.querySelectorAll('nav a[data-n], #dr a[data-n]').forEach(x => x.classList.toggle('on', x.dataset.n == navKey(a)));
     if (!state.tweets.length)
         return;
     const sq = $('#sq');
