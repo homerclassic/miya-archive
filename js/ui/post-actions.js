@@ -3,7 +3,7 @@
  */
 
 import { $, showToast } from '../core/dom.js';
-import { ICONS, icon } from '../core/icons.js';
+import { ICONS, ICON_LINK_PATH, filledIcon, icon } from '../core/icons.js';
 import { state } from '../core/state.js';
 import { collectThreadIds } from '../export/thread-document.js';
 import { downloadThreadPdf } from '../export/thread-export.js';
@@ -35,7 +35,7 @@ export function openShareMenu(btn) {
     m.id = 'shm';
     m.dataset.id = id;
     m.setAttribute('role', 'menu');
-    m.innerHTML = `<button type="button" role="menuitem" data-a="link">${icon(ICONS.link, 18)}Copy link</button>${collectThreadIds(id).length > 1 ? `<button type="button" role="menuitem" data-a="pdf">${icon(ICONS.dl, 18)}Download thread as PDF</button>` : ''}`;
+    m.innerHTML = `<button type="button" role="menuitem" data-a="link">${filledIcon(ICON_LINK_PATH, 18)}Copy link</button>${collectThreadIds(id).length > 1 ? `<button type="button" role="menuitem" data-a="pdf">${icon(ICONS.dl, 18)}Download thread as PDF</button>` : ''}`;
     document.body.append(m);
     const r = btn.getBoundingClientRect();
     const w = m.offsetWidth;

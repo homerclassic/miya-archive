@@ -3,7 +3,7 @@
  */
 
 import { $, main } from '../core/dom.js';
-import { ICONS, icon } from '../core/icons.js';
+import { ICON_SEARCH_PATH, filledIcon } from '../core/icons.js';
 import { state } from '../core/state.js';
 import { renderLazyList } from '../ui/lazy-list.js';
 import { pageHeader } from '../ui/page-header.js';
@@ -18,7 +18,7 @@ export function renderHistoryPage(tab) {
     const L = A[tab];
     const tabs = [['bookmarks', 'Bookmarks'], ['likes', 'Likes']];
     const em = (h, m) => `<div class="stub" style="padding:40px 16px;text-align:center"><b style="color:var(--tx);font-size:22px;display:block;margin-bottom:6px">${h}</b>${m}</div>`;
-    main.innerHTML = pageHeader('History', `${A.likes.length.toLocaleString()} liked · ${A.bookmarks.length.toLocaleString()} bookmarked`) + `<div class="tabs2">${tabs.map(([k, n]) => `<a data-go="/history/${k}" class="${k == tab ? 'on' : ''}">${n}</a>`).join('')}</div><div class="sh"><div class="sb sbm">${icon(ICONS.srch, 18)}<input type="search" id="hq" placeholder="Search" autocomplete="off" spellcheck="false"></div></div><div id="l"></div>`;
+    main.innerHTML = pageHeader('History', `${A.likes.length.toLocaleString()} liked · ${A.bookmarks.length.toLocaleString()} bookmarked`) + `<div class="tabs2">${tabs.map(([k, n]) => `<a data-go="/history/${k}" class="${k == tab ? 'on' : ''}">${n}</a>`).join('')}</div><div class="sh"><div class="sb sbm">${filledIcon(ICON_SEARCH_PATH, 18)}<input type="search" id="hq" placeholder="Search" autocomplete="off" spellcheck="false"></div></div><div id="l"></div>`;
     const l = $('#l');
     const hq = $('#hq');
     const draw = () => {

@@ -503,4 +503,9 @@ nav .im,
   .hd0.pfh .bk {
     display: none;
   }
+
+  /* profile header uses a tighter gap than the 28px mobile default, so the back arrow sits close to the name and the search button sits close to it, like Twitter */
+  .hd0.pfh {
+    gap: 12px;
+  }
 }

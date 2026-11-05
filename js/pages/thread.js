@@ -31,7 +31,7 @@ export function renderThread(id, force) {
     })(id, 0);
     const top = anc[0] || t;
     main.innerHTML = pageHeader('Post', '', 1) + (top.rp && top.rh && !top.rt ? `<div class="stub">Replying to <a data-q="@${top.rh}">@${top.rh}</a> — original tweet isn't in the archive</div>` : '') + anc.map(a => tweetCard(a, { k: 1 })).join('') + tweetCard(t, { f: 1 }) + `<div class="bar vt"><a data-go="/at/${id}">View in timeline</a></div><div id="l"></div>`;
-    renderLazyList($('#l'), ds, ([k, d]) => tweetCard(k, { d: d + 1 }), 40);
+    renderLazyList($('#l'), ds, ([k, d]) => tweetCard(k, { d: d + 1, k: (state.repliesByParent[k.id] || []).length ? 1 : 0 }), 40);
     $('#t' + id).scrollIntoView({ block: 'start' });
     scrollBy(0, -60);
 }

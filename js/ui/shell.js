@@ -19,6 +19,17 @@ export function renderShell() {
     const D = document.documentElement.dataset;
     document.title = 'Miya Archive';
     $('#nav').innerHTML = `<a class="lg" href="#/">${avatar('s')}</a><a href="#/" data-n="">${filledIcon(ICON_HOME_PATH, 26)}<span class="t">Home</span></a><a href="#/tweets" data-n="tweets">${filledIcon(ICON_PROFILE_PATH, 26)}<span class="t">Tweets</span></a><a class="nhs" href="#/history" data-n="history">${filledIcon(ICON_BOOKMARK_PATH)}<span class="t">History</span></a><a class="nsr" href="#/search/" data-n="search">${filledIcon(ICON_SEARCH_PATH)}<span class="t">Search</span></a><a id="rd" class="rdb" role="switch" tabindex="0" aria-checked="false" title="Reader mode">${icon(ICONS.read, 26)}<span class="t">Reader</span><span class="sw2 t"></span></a><a id="kt" class="ktb" role="switch" tabindex="0" aria-checked="true" title="Click any frequent word in a tweet to search for it">${icon(ICONS.kw, 26)}<span class="t">Quick search</span><span class="sw2 t"></span></a>`;
+    // Mobile: tapping the Search nav icon while already on the search page focuses the search field (opens the keyboard).
+    document.querySelector('#nav a[data-n="search"]').addEventListener('click', e => {
+        if (!matchMedia('(pointer:coarse)').matches)
+            return;
+        if (decodeURIComponent(location.hash.slice(2)).split('/')[0] === 'search') {
+            e.preventDefault();
+            const qm = $('#qm');
+            if (qm)
+                qm.focus();
+        }
+    });
     document.querySelectorAll('#dr,#drb').forEach(x => x.remove());
     const drb = document.createElement('div');
     drb.id = 'drb';
@@ -89,7 +100,7 @@ export function renderShell() {
             }
         };
     });
-    $('#side').innerHTML = `<div class="sb sbs">${icon(ICONS.srch, 18)}<input type="search" id="sq" placeholder="Search" autocomplete="off" spellcheck="false"></div><div id="sidecard" style="padding:2px 16px"></div>`;
+    $('#side').innerHTML = `<div class="sb sbs">${filledIcon(ICON_SEARCH_PATH, 18)}<input type="search" id="sq" placeholder="Search" autocomplete="off" spellcheck="false"></div><div id="sidecard" style="padding:2px 16px"></div>`;
     renderSideCard();
     const sq = $('#sq');
     let tm;

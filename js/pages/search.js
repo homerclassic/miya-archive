@@ -3,7 +3,7 @@
  */
 
 import { $, main } from '../core/dom.js';
-import { ICONS, icon } from '../core/icons.js';
+import { ICON_SEARCH_PATH, filledIcon } from '../core/icons.js';
 import { state } from '../core/state.js';
 import { openAdvancedSearch } from '../search/advanced-modal.js';
 import { SORT_LABELS, parseQuery, runSearch, tokenizeQuery } from '../search/query.js';
@@ -32,7 +32,7 @@ export function renderSearchResults() {
 
 export function renderSearchPage(q) {
     state.searchQuery = q;
-    main.innerHTML = pageHeader('Search') + `<div class="sh"><div class="sb sbm">${icon(ICONS.srch, 18)}<input type="search" id="qm" placeholder="Search" autocomplete="off" spellcheck="false"></div><div class="nar" style="margin:0 0 10px"><a id="adv2">Advanced search</a></div></div><div class="bar" id="cnt"></div><div id="l"></div>`;
+    main.innerHTML = pageHeader('Search') + `<div class="sh"><div class="sb sbm">${filledIcon(ICON_SEARCH_PATH, 18)}<input type="search" id="qm" placeholder="Search" autocomplete="off" spellcheck="false"></div><div class="nar" style="margin:0 0 10px"><a id="adv2">Advanced search</a></div></div><div class="bar" id="cnt"></div><div id="l"></div>`;
     const qm = $('#qm');
     qm.value = q;
     let tm;
