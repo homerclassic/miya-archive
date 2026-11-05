@@ -226,7 +226,7 @@ function quoteHtml(q) {
     const qtx = qtext ? `<div class="qx">${linkify(qtext)}</div>` : '';
     const qmd = mediaHtml(q.media, q.id);
     return `<a class="qc" href="${q.id}.html">`
-        + `<div class="qh"><span class="av"><img src="../data/miya.png" alt="${AUTHOR_NAME}"></span><b>${AUTHOR_NAME}</b><span class="mu">@${AUTHOR_HANDLE} · ${fmtDateShort(q.date)}</span></div>`
+        + `<div class="qh"><span class="av"><img src="../data/miya.png" alt="${AUTHOR_NAME}"></span><div><b>${AUTHOR_NAME}</b><div class="mu">@${AUTHOR_HANDLE} · ${fmtDateShort(q.date)}</div></div></div>`
         + qtx + qmd
         + `</a>`;
 }
@@ -379,6 +379,8 @@ const STYLES = `/* Miya Archive — per-tweet pages. The tweet card itself is st
   font-size: 15px;
   line-height: 20px;
 }
+.qc .qh > div { min-width: 0; }
+.qc .qh b { display: block; }
 .qc .qh .av { width: 20px; height: 20px; }
 .qc .qh .av img { width: 20px; height: 20px; }
 .qc .qx { margin-top: 4px; font-size: 15px; line-height: 20px; }
