@@ -15,7 +15,7 @@ npm run standalone # standalone build in standalone/ (run `npm install` first)
 
 ## Releases
 
-The standalone build is the release artifact for users who don't want to run a server: a single download, no setup, no terminal. It is built from source and attached to a GitHub Release. The release asset is a zip of `standalone/`'s contents under a top folder named `miya-archive/`. Attach the zip, not the bare HTML — the HTML alone loads no images, since it needs `data/` and `assets/` beside it. It is not committed to the repo, and it is not a separate repo. A release is a snapshot; cut a new one when the archive data changes.
+The standalone build is the release artifact for users who don't want to run a server: a single download, no setup, no terminal. It is built from source and attached to a GitHub Release. The release asset is a zip of `standalone/`'s contents under a top folder named `miya-archive/`. Attach the zip, not the bare HTML — the HTML alone loads no images, since it needs `data/` and `assets/` beside it. It is not committed to the repo, and it is not a separate repo. A release is a snapshot; cut a new one when the viewer changes. The archive data is frozen (2019–2020) and never changes, so releases are for features and fixes only.
 
 ## Project layout
 
