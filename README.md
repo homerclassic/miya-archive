@@ -2,6 +2,8 @@
 
 The tweet archive of **Miya Black Hearted Cyber Angel Baby** (@BPD_GOD): every tweet, thread, reply, and photo in one place, searchable and browsable.
 
+![Miya Archive screenshot](assets/miya-archive-screenshot-cropped.png)
+
 ## Use it
 
 The standalone build is a single zip download requiring no installation or configuration. Download the latest version from the [Releases page](https://github.com/homerclassic/miya-archive/releases), unzip it, and open `miya-archive-standalone.html`. Alternatively, browse the archive online at https://homerclassic.github.io/miya-archive/.
