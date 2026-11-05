@@ -4,6 +4,7 @@
 
 import { encodeUri, navigate, scrollToTop } from './core/dom.js';
 import { formatCount } from './core/format.js';
+import { ICON_BOOKMARK_FILLED_PATH, ICON_BOOKMARK_PATH, ICON_LIKE_FILLED_PATH, ICON_LIKE_PATH } from './core/icons.js';
 import { state } from './core/state.js';
 import { addRecentSearch, persistHistory } from './core/storage.js';
 import { handleRoute, navKey } from './router.js';
@@ -103,6 +104,9 @@ export function initEvents() {
                     on ? state.likedIds.add(id) : state.likedIds.delete(id);
                     document.querySelectorAll(`.tw[data-id="${id}"] .a.p`).forEach(x => {
                         x.classList.toggle('on', on);
+                        const p = x.querySelector('svg path');
+                        if (p)
+                            p.setAttribute('d', on ? ICON_LIKE_FILLED_PATH : ICON_LIKE_PATH);
                         if (on) {
                             x.classList.add('pop');
                             setTimeout(() => x.classList.remove('pop'), 500);
@@ -115,7 +119,12 @@ export function initEvents() {
                 else {
                     const on = !state.bookmarkedIds.includes(id);
                     state.bookmarkedIds = on ? [...state.bookmarkedIds, id] : state.bookmarkedIds.filter(x => x != id);
-                    document.querySelectorAll(`.tw[data-id="${id}"] .a.k`).forEach(x => x.classList.toggle('on', on));
+                    document.querySelectorAll(`.tw[data-id="${id}"] .a.k`).forEach(x => {
+                        x.classList.toggle('on', on);
+                        const p = x.querySelector('svg path');
+                        if (p)
+                            p.setAttribute('d', on ? ICON_BOOKMARK_FILLED_PATH : ICON_BOOKMARK_PATH);
+                    });
                 }
                 persistHistory();
                 return;

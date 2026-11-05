@@ -5,7 +5,7 @@
 import { PROFILE_BIO, WEBSITE_LABEL, WEBSITE_URL } from '../core/config.js';
 import { $, escapeHtml, main } from '../core/dom.js';
 import { formatDate } from '../core/format.js';
-import { ICONS, icon } from '../core/icons.js';
+import { ICONS, ICON_CALENDAR_PATH, ICON_LINK_PATH, filledIcon, icon } from '../core/icons.js';
 import { displayName, isFeaturedProfile } from '../core/identity.js';
 import { state } from '../core/state.js';
 import { avatar } from '../ui/avatar.js';
@@ -26,7 +26,7 @@ export function renderProfile(kind = '') {
         L.reverse();
     const G = kind == 'media' ? L.flatMap(t => t.m.filter(iv).slice(0, 4).map(p => ({ t, p }))) : null;
     const sub = `${state.tweets.length.toLocaleString()} posts`;
-    main.innerHTML = pageHeader(escapeHtml(displayName()), sub, 0, 1) + `<div class="ban"></div><div class="pf">${avatar('xl')}<h2>${escapeHtml(displayName())}</h2><div class="mu">@${escapeHtml(state.ownerHandle)}</div>${isFeaturedProfile() ? `<div class="bio">${highlightHtml(linkify(PROFILE_BIO))}</div><div class="mu pm"><span>${icon(ICONS.link, 18)}<a href="${WEBSITE_URL}" target="_blank" rel="noopener">${WEBSITE_LABEL}</a></span><span>${icon(ICONS.cal, 18)}${formatDate(state.tweets[0].t)} – ${formatDate(state.tweets.at(-1).t)}</span></div>` : `<div class="mu" style="margin-top:12px;display:flex;gap:6px;align-items:center">${icon(ICONS.cal, 16)} ${formatDate(state.tweets[0].t)} – ${formatDate(state.tweets.at(-1).t)}</div>`}</div><div class="tabs2 ptabs">${PROFILE_TABS.map(([k, n]) => `<a data-go="/tweets${k ? '/' + k : ''}" class="${k == kind ? 'on' : ''}">${n}</a>`).join('')}</div><div class="bar"><a id="od">${state.oldestFirst ? 'Oldest first ↑' : 'Newest first ↓'}</a></div><div id="l"${G ? ' class="md mg"' : ''}></div>`;
+    main.innerHTML = pageHeader(escapeHtml(displayName()), sub, 0, 1) + `<div class="ban"></div><div class="pf">${avatar('xl')}<h2>${escapeHtml(displayName())}</h2><div class="mu">@${escapeHtml(state.ownerHandle)}</div>${isFeaturedProfile() ? `<div class="bio">${highlightHtml(linkify(PROFILE_BIO))}</div><div class="mu pm"><span>${filledIcon(ICON_LINK_PATH, 18)}<a href="${WEBSITE_URL}" target="_blank" rel="noopener">${WEBSITE_LABEL}</a></span><span>${filledIcon(ICON_CALENDAR_PATH, 18)}${formatDate(state.tweets[0].t)} – ${formatDate(state.tweets.at(-1).t)}</span></div>` : `<div class="mu" style="margin-top:12px;display:flex;gap:6px;align-items:center">${filledIcon(ICON_CALENDAR_PATH, 16)} ${formatDate(state.tweets[0].t)} – ${formatDate(state.tweets.at(-1).t)}</div>`}</div><div class="tabs2 ptabs">${PROFILE_TABS.map(([k, n]) => `<a data-go="/tweets${k ? '/' + k : ''}" class="${k == kind ? 'on' : ''}">${n}</a>`).join('')}</div><div class="bar"><a id="od">${state.oldestFirst ? 'Oldest first ↑' : 'Newest first ↓'}</a></div><div id="l"${G ? ' class="md mg"' : ''}></div>`;
     $('#od').onclick = () => {
         state.oldestFirst = !state.oldestFirst;
         renderProfile(kind);
