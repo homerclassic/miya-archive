@@ -392,6 +392,11 @@ const STYLES = `/* Miya Archive — per-tweet pages. The tweet card itself is st
 .qc .qh .av { width: 20px; height: 20px; }
 .qc .qh .av img { width: 20px; height: 20px; }
 .qc .qx { margin-top: 4px; font-size: 15px; line-height: 20px; }
+/* The action row was removed from the static page, so the stats' bottom
+   border sat directly on the card's own bottom border — two lines touching.
+   Drop the stats border so there is a single divider above "View in archive".
+   (Viewer only: the app still has its action row, so its stats border stays.) */
+.tw.fo .st { border-bottom: 0; }
 /* Layout spacers: the app's #app holds nav + main + aside, and the main
    column sits offset from centre by the nav/aside widths. The static page
    has no app chrome, so empty nav/aside spacers keep the column in the
