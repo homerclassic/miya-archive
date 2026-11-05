@@ -225,10 +225,10 @@ function quoteHtml(q) {
     const qtext = q.text.trim();
     const qtx = qtext ? `<div class="qx">${linkify(qtext)}</div>` : '';
     const qmd = mediaHtml(q.media, q.id);
-    return `<a class="qc" href="${q.id}.html">`
-        + `<div class="qh"><span class="av"><img src="../data/miya.png" alt="${AUTHOR_NAME}"></span><div><b>${AUTHOR_NAME}</b><div class="mu">@${AUTHOR_HANDLE} · ${fmtDateShort(q.date)}</div></div></div>`
+    return `<div class="qc">`
+        + `<a href="${q.id}.html"><div class="qh"><span class="av"><img src="../data/miya.png" alt="${AUTHOR_NAME}"></span><div><b>${AUTHOR_NAME}</b><div class="mu">@${AUTHOR_HANDLE} · ${fmtDateShort(q.date)}</div></div></div></a>`
         + qtx + qmd
-        + `</a>`;
+        + `</div>`;
 }
 
 /**
@@ -372,6 +372,14 @@ const STYLES = `/* Miya Archive — per-tweet pages. The tweet card itself is st
   text-decoration: none;
 }
 .qc:hover { background: var(--hv); }
+/* The card itself is a div, not a link: the quoted text can contain its own
+   links, and an <a> inside an <a> is invalid — the browser splits the card
+   apart. The header is the link to the quoted tweet instead. */
+.qc > a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
 .qc .qh {
   display: flex;
   align-items: center;
