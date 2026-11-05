@@ -312,7 +312,8 @@ function tweetPage(t, idSet, byId) {
     return '<!doctype html>\n'
         + '<html lang="en" data-t="light">\n<head>\n<meta charset="utf-8">\n'
         + '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-        + `<title>${escapeHtml(title)} | Miya Archive</title>\n`
+        + `<title>Miya Archive · ${escapeHtml(title)}</title>\n`
+        + `<link rel="icon" href="../assets/favicon.jpg" type="image/jpeg">\n`
         + `<meta name="description" content="${escapeHtml(metaDesc)}">\n`
         + `<meta name="author" content="${AUTHOR_NAME}">\n`
         + `<meta property="og:title" content="${escapeHtml(embedTitle)}">\n`
