@@ -29,7 +29,8 @@ export function tweetCard(t, o = {}) {
     const bmd = state.bookmarkedIds.includes(P.id);
     const n = sm ? (state.repliesByParent[P.id] || []).length : 0;
     const lead = R ? '' : (X.match(/^(?:@\w+\s+)+/) || [''])[0];
-    const hs = [...new Set(lead.match(/@\w+/g) || (P.rh && !P.rt ? ['@' + P.rh] : []))];
+    // Drop the author's own handle: "Replying to @self" wastes a line on self-replies.
+    const hs = [...new Set(lead.match(/@\w+/g) || (P.rh && !P.rt ? ['@' + P.rh] : []))].filter(h => h.slice(1).toLowerCase() != W.toLowerCase());
     const body = R ? X : X.slice(lead.length);
     const rl = hs.length ? `<div class="mu">Replying to ${hs.slice(0, 2).map(h => profileAnchor(h, '', h)).join(' and ')}${hs.length > 2 ? ` and ${hs.length - 2} other${hs.length > 3 ? 's' : ''}` : ''}</div>` : '';
     const em = extractEmbed(body, ms.length > 0);

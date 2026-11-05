@@ -35,7 +35,7 @@ function renderEmbeddedPost(el, p) {
     el.dataset.ext = el.dataset.xurl = url;
     const av = p.a ? remoteAvatar().replace(/<\/div>$/, `<img alt="" loading="lazy" decoding="async" src="${escapeHtml(p.a.replace('_normal.', '_bigger.'))}" data-fallback="remove"></div>`) : remoteAvatar();
     const head = `<div class="qhd">${profileAnchor(s, 'avl2', av)}<div class="qid"><div class="qnm">${profileAnchor(s, 'nm', `<b>${escapeHtml(p.n || s)}</b>`)}${p.v ? VERIFIED_BADGE : ''}</div><div class="qsub">${profileAnchor(s, 'nm', '@' + escapeHtml(s))}${dt ? ' · ' + dt : ''}</div></div><span class="qlogo">${X_LOGO_SVG}</span></div>`;
-    const rp = p.rp ? `<div class="qrp">Replying to <a href="https://x.com/${escapeHtml(p.rp)}" target="_blank" rel="noopener">@${escapeHtml(p.rp)}</a></div>` : '';
+    const rp = p.rp && p.rp.toLowerCase() != (s || '').toLowerCase() ? `<div class="qrp">Replying to <a href="https://x.com/${escapeHtml(p.rp)}" target="_blank" rel="noopener">@${escapeHtml(p.rp)}</a></div>` : '';
     const tx = p.x ? `<div class="qtx">${linkifyEmbedText(p.x)}</div>` : '';
     const md = (p.m && p.m.length) ? `<div class="qg">${p.m.map(m => `<div class="qgi">${m.k == 'animated_gif' && m.v ? `<video src="${escapeHtml(m.v)}" poster="${escapeHtml(m.u)}" autoplay loop muted playsinline></video><span class="qb">GIF</span>` : `<img loading="lazy" decoding="async" alt="" src="${escapeHtml(m.u)}" data-fallback="embed-media">${m.k == 'video' ? '<span class="pl">▶</span>' : ''}`}</div>`).join('')}</div>` : '';
     const q = p.q ? `<div class="qn"><div class="qnm"><b>${escapeHtml(p.q.n || p.q.s)}</b><span class="mu">@${escapeHtml(p.q.s)}</span></div>${p.q.x ? `<div class="qt">${escapeHtml(p.q.x)}</div>` : ''}</div>` : '';
