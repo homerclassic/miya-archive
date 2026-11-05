@@ -261,6 +261,10 @@ function tweetPage(t, idSet, byId) {
     const hasText = displayText.trim().length > 0;
     const titleText = hasText ? plainSnippet(displayText, 100) : `Photo · ${fmtDateShort(t.date)}`;
     const title = `${titleText} · ${AUTHOR_NAME} (@${AUTHOR_HANDLE})`;
+    // The embed title (og:title / twitter:title) is the author's name and
+    // handle, as on Twitter — not the tweet text. The tweet text stays as
+    // the embed description.
+    const embedTitle = `${AUTHOR_NAME} (@${AUTHOR_HANDLE})`;
     const desc = hasText ? plainSnippet(displayText, 300)
         : `Photo posted by ${AUTHOR_NAME} (@${AUTHOR_HANDLE}) on ${fmtDateShort(t.date)} in the Miya archive.`;
     const metaDesc = hasText ? plainSnippet(displayText, 155) : desc;
@@ -311,13 +315,13 @@ function tweetPage(t, idSet, byId) {
         + `<title>${escapeHtml(title)} | Miya Archive</title>\n`
         + `<meta name="description" content="${escapeHtml(metaDesc)}">\n`
         + `<meta name="author" content="${AUTHOR_NAME}">\n`
-        + `<meta property="og:title" content="${escapeHtml(title)}">\n`
+        + `<meta property="og:title" content="${escapeHtml(embedTitle)}">\n`
         + `<meta property="og:description" content="${escapeHtml(desc)}">\n`
         + `<meta property="og:type" content="article">\n`
         + `<meta property="og:url" content="${pageUrl}">\n`
         + `<meta property="og:image" content="${ogImage}">\n`
         + `<meta name="twitter:card" content="${card}">\n`
-        + `<meta name="twitter:title" content="${escapeHtml(title)}">\n`
+        + `<meta name="twitter:title" content="${escapeHtml(embedTitle)}">\n`
         + `<meta name="twitter:description" content="${escapeHtml(desc)}">\n`
         + `<meta name="twitter:image" content="${ogImage}">\n`
         + `<link rel="canonical" href="${pageUrl}">\n`
