@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { build } from 'esbuild';
+import { buildTweetPages } from './build-tweet-pages.mjs';
 
 const OUT = 'dist';
 fs.rmSync(OUT, { recursive: true, force: true });
@@ -26,6 +27,10 @@ html = html
 fs.writeFileSync(OUT + '/index.html', html);
 fs.copyFileSync('assets/favicon.jpg', OUT + '/assets/favicon.jpg');
 if (fs.existsSync('data')) fs.cpSync('data', OUT + '/data', { recursive: true });
+
+// Per-tweet static pages for link embeds: one HTML page per tweet in
+// dist/tweet/<id>.html with og/twitter meta tags, generated from data/tweets.md.
+buildTweetPages(OUT);
 
 const kb = (f) => (fs.statSync(path.join(OUT, f)).size / 1024).toFixed(1) + ' kB';
 console.log(`dist/app.js ${kb('app.js')}, dist/app.css ${kb('app.css')}`);

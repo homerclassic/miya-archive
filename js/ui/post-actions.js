@@ -53,7 +53,13 @@ export function openShareMenu(btn) {
 }
 
 function copyLink(id) {
-    const u = location.href.split('#')[0] + '#/t/' + id;
+    // Share the static per-tweet page (tweet/<id>.html) so the link unfurls
+    // with the tweet text and media. The standalone is a single file with
+    // no static pages, so there fall back to the in-app link.
+    const base = location.href.split('#')[0];
+    const u = location.protocol === 'file:'
+        ? base + '#/t/' + id
+        : new URL('tweet/' + id + '.html', base).href;
     (navigator.clipboard && window.isSecureContext ? navigator.clipboard.writeText(u) : Promise.reject()).catch(() => {
         const t = document.createElement('textarea');
         t.value = u;

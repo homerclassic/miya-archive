@@ -11,7 +11,7 @@ import { renderSearchPage } from './pages/search.js';
 import { renderThread } from './pages/thread.js';
 import { renderTimelineAt } from './pages/timeline.js';
 
-export const navKey = a => a == 'search' || a == 'history' ? a : a == 'bookmarks' ? 'history' : a == 'tweets' || a == 'media' || a == 't' || a == 'at' ? 'tweets' : '';
+export const navKey = a => a == 'search' || a == 'history' ? a : a == 'bookmarks' ? 'history' : a == 'tweets' || a == 'media' || a == 't' || a == 'tweet' || a == 'at' ? 'tweets' : '';
 
 /**
  * Render the page for the current location.hash. `fresh` means a refresh rather than navigation.
@@ -37,6 +37,7 @@ export function handleRoute(fresh) {
             renderHistoryPage(a == 'bookmarks' ? 'bookmarks' : b);
             break;
         case 't':
+        case 'tweet':
             renderThread(b);
             break;
         case 'at':

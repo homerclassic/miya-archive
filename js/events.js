@@ -26,7 +26,7 @@ function handleHeaderTap(e) {
     const na = e.target.closest('#nav>a.on[data-n]');
     if (na) {
         const sec = decodeURIComponent(location.hash.slice(2)).split('/')[0];
-        const cur = sec == 't' || sec == 'at' ? null : navKey(sec);
+        const cur = sec == 't' || sec == 'tweet' || sec == 'at' ? null : navKey(sec);
         if (na.dataset.n == '' && sec == 'explore') {
             e.preventDefault();
             location.hash = '#/';
@@ -104,6 +104,10 @@ export function initEvents() {
                     on ? state.likedIds.add(id) : state.likedIds.delete(id);
                     document.querySelectorAll(`.tw[data-id="${id}"] .a.p`).forEach(x => {
                         x.classList.toggle('on', on);
+                        // The hollow and filled hearts are different paths, so
+                        // the shape has to be swapped too — the `on` class
+                        // only changes the colour, and a hollow glyph filled
+                        // with colour still looks hollow.
                         const p = x.querySelector('svg path');
                         if (p)
                             p.setAttribute('d', on ? ICON_LIKE_FILLED_PATH : ICON_LIKE_PATH);
