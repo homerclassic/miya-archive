@@ -191,10 +191,6 @@ nav>a,
     top: -140px;
   }
 
-  html.nvh .hd0::before {
-    opacity: 0;
-  }
-
   html.pfs .hd0.pfh .mav {
     display: none;
   }

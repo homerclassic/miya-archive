@@ -170,8 +170,7 @@ aside {
   height: var(--ph,100%);
   z-index: -1;
   pointer-events: none;
-  background: color-mix(in srgb,var(--bg) 82%,transparent);
-  backdrop-filter: blur(12px);
+  background: var(--bg);
 }
 
 .hd0 b {
@@ -213,6 +212,7 @@ aside {
   position: sticky;
   top: 53px;
   z-index: 6;
+  background: var(--bg);
 }
 
 .tabs2 a {
@@ -371,9 +371,7 @@ nav .im,
     padding: 0 0 env(safe-area-inset-bottom,0px);
     gap: 0;
     justify-content: stretch;
-    background: color-mix(in srgb,var(--bg) 88%,transparent);
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
+    background: var(--bg);
   }
 
   nav>a {
@@ -480,9 +478,7 @@ nav .im,
 /* tabs sitting under the top bar share the bar's glass (glass() stretches it behind them), so bar + tabs are one seamless surface; tabs get their own glass only when they stand alone */
 
 .hh+.tabs2 {
-  background: color-mix(in srgb,var(--bg) 82%,transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  background: var(--bg);
 }
 
 /* mobile: History lives only in the side menu */
