@@ -10,9 +10,11 @@ The standalone build is a single zip download requiring no installation or confi
 
 ## Features
 
-* Filter and sort searches by year, photos and video, likes, retweets, and tweet type
+* Advanced search with a query language, filters, and sorting
+* Reader mode for distraction-free reading
+* Quick search — click any word in a tweet to search for it
 * Like and bookmark tweets to find them again later
-* Download a thread as a PDF
+* Download any thread as a PDF
 
 ## Run from source
 
