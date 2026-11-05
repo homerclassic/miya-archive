@@ -226,7 +226,7 @@ function quoteHtml(q) {
     const qtx = qtext ? `<div class="qx">${linkify(qtext)}</div>` : '';
     const qmd = mediaHtml(q.media, q.id);
     return `<div class="qc">`
-        + `<a href="${q.id}.html"><div class="qh"><span class="av"><img src="../data/miya.png" alt="${AUTHOR_NAME}"></span><div><b>${AUTHOR_NAME}</b><div class="mu">@${AUTHOR_HANDLE} · ${fmtDateShort(q.date)}</div></div></div></a>`
+        + `<a class="nm" href="${q.id}.html"><div class="qh"><span class="av"><img src="../data/miya.png" alt="${AUTHOR_NAME}"></span><div><b>${AUTHOR_NAME}</b><div class="mu">@${AUTHOR_HANDLE} · ${fmtDateShort(q.date)}</div></div></div></a>`
         + qtx + qmd
         + `</div>`;
 }
