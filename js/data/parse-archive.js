@@ -1,13 +1,18 @@
 /**
  * Parses the exported Markdown archive (data/tweets.md) into tweet objects.
- * 
+ *
  * Tweet fields (kept short because thousands of objects are created):
  *   id  string id            t   timestamp (ms)         l   likes          r   retweets
  *   rp  in-reply-to id       rh  reply-to handle        x   full text      lc  lower-cased text
  *   mn  mentions (lower)     rt  is a retweet           ra  retweeted author   rb  retweet body
- *   m   media paths          lk  has links
+ *   m   media paths          lk  has external links   qt  is a quote tweet
  * Fields added later by linkRetweets(): n (normalised text), so (self retweet), o (original tweet).
  */
+
+// A quoted tweet's status URL is not an external link.
+const STATUS_URL = /(?:www\.)?(?:twitter\.com|x\.com)\/\w+\/status\/\d+/;
+const hasExternalLink = s => ((s || '').match(/https?:\/\/[^\s)]+/g) || []).some(u => !STATUS_URL.test(u));
+const hasStatusLink = s => STATUS_URL.test(s || '');
 
 /**
  * Parse the Markdown archive into an array of tweet objects (see the field legend at the top of this file).
@@ -24,7 +29,7 @@ export function parseArchive(txt) {
         }
         const x = (o.Text || '').replace(/\\n/g, '\n').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
         out.push({
-            id: b.slice(0, nl).trim(), t: Date.parse(o.Date), l: +o.Likes || 0, r: +o.Retweets || 0, rp: o.in_reply_to_status_id || '', rh: ((o['Reply to'] || '').match(/^@(\w+)/) || [])[1] || '', x, lc: x.toLowerCase().replace(/[’‘]/g, "'"), mn: (o.Mentions || '').toLowerCase(), rt: /^RT @/.test(x), ra: (/^RT @(\w+):/.exec(x) || [])[1] || '', rb: x.replace(/^RT @\w+: ?/, ''), m: [...(o.Media || '').matchAll(/\]\(([^)]+)\)/g)].map(m => m[1]), lk: !!o.Links || /https?:\/\//.test(x)
+            id: b.slice(0, nl).trim(), t: Date.parse(o.Date), l: +o.Likes || 0, r: +o.Retweets || 0, rp: o.in_reply_to_status_id || '', rh: ((o['Reply to'] || '').match(/^@(\w+)/) || [])[1] || '', x, lc: x.toLowerCase().replace(/[’‘]/g, "'"), mn: (o.Mentions || '').toLowerCase(), rt: /^RT @/.test(x), ra: (/^RT @(\w+):/.exec(x) || [])[1] || '', rb: x.replace(/^RT @\w+: ?/, ''), m: [...(o.Media || '').matchAll(/\]\(([^)]+)\)/g)].map(m => m[1]), lk: hasExternalLink(o.Links) || hasExternalLink(x), qt: hasStatusLink(o.Links) || hasStatusLink(x)
         });
     }
     return out;

@@ -13,7 +13,7 @@ const WORD_END = '(?![\\p{L}\\p{N}_])';
 const wordRegex = (w, s) => new RegExp(WORD_START + escapeRegex(w) + (s ? WORD_END : ''), 'u');
 
 const TYPE_ALIASES = {
-    originals: 'original', replies: 'reply', retweet: 'rt', retweets: 'rt', own: 'self', chain: 'self', threads: 'thread'
+    originals: 'original', replies: 'reply', retweet: 'rt', retweets: 'rt', own: 'self', chain: 'self', threads: 'thread', quotes: 'quote'
 };
 
 const HAS_ALIASES = {
@@ -116,7 +116,7 @@ export function parseQuery(q) {
 }
 
 const TWEET_TYPE_TESTS = {
-    original: t => !t.rt && !t.rp && !t.rh, reply: t => !t.rt && !!(t.rp || t.rh), self: t => !t.rt && !!state.tweetsById[t.rp], thread: t => !t.rt && !!(state.tweetsById[t.rp] || state.repliesByParent[t.id]), rt: t => t.rt, selfrt: t => !!t.so
+    original: t => !t.rt && !t.rp && !t.rh, reply: t => !t.rt && !!(t.rp || t.rh), self: t => !t.rt && !!state.tweetsById[t.rp], thread: t => !t.rt && !!(state.tweetsById[t.rp] || state.repliesByParent[t.id]), rt: t => t.rt, selfrt: t => !!t.so, quote: t => !t.rt && t.qt
 };
 
 const matchesTerm = (e, t) => e.r.test(t.lc) || (e.at && e.r.test(t.mn));

@@ -75,7 +75,7 @@ function renderAdvancedModal() {
     const eff = f.sort || (f.txt ? 'best' : 'new');
     const ys = [...new Set(state.months.map(x => x.y))];
     let h = `<div class="mb"><div class="mh"><button class="x" data-cl="1" aria-label="Close" style="font-size:22px;padding:4px 10px">✕</button><b>Advanced search</b><button class="go" data-sub="1">Search</button></div><div class="mc">`;
-    h += chipGroup('Show', [['', 'Everything'], ['original', 'Originals'], ['reply', 'Replies'], ['thread', 'Threads'], ['rt', 'Retweets'], ['selfrt', 'Self-retweets']].map(([k, l]) => chipButton(k ? f.type.length == 1 && f.type[0] == k : !f.type.length && !f.ntype.length, 'type', k, l)).join(''));
+    h += chipGroup('Show', [['', 'Everything'], ['original', 'Originals'], ['reply', 'Replies'], ['thread', 'Threads'], ['rt', 'Retweets'], ['quote', 'Quotes']].map(([k, l]) => chipButton(k ? f.type.length == 1 && f.type[0] == k : !f.type.length && !f.ntype.length, 'type', k, l)).join(''));
     h += chipGroup('Sort by', Object.entries(SORT_LABELS).filter(([k]) => k != 'best' || f.txt).map(([k, l]) => chipButton(eff == k, 'sort', k, l)).join(''));
     h += chipGroup('Contains', chipButton(f.has.includes('media'), 'has', 'media', 'Photos &amp; video') + chipButton(f.has.includes('link'), 'has', 'link', 'Links'));
     h += chipGroup('Likes', [[0, 'Any'], [1, '1+'], [10, '10+'], [50, '50+'], [100, '100+'], [500, '500+']].map(([v, l]) => chipButton(f.minl == v, 'minl', v, l)).join(''));
