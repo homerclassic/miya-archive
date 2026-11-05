@@ -3,6 +3,7 @@
  */
 
 import { state } from '../core/state.js';
+import { VIDEO_URL_RX } from '../core/format.js';
 
 const escapeRegex = w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -12,12 +13,14 @@ const WORD_END = '(?![\\p{L}\\p{N}_])';
 
 const wordRegex = (w, s) => new RegExp(WORD_START + escapeRegex(w) + (s ? WORD_END : ''), 'u');
 
+const IMG_RX = /\.(?:jpe?g|png|gif|webp)(?:[?#]|$)/i;
+
 const TYPE_ALIASES = {
     originals: 'original', replies: 'reply', retweet: 'rt', retweets: 'rt', own: 'self', chain: 'self', threads: 'thread', quotes: 'quote'
 };
 
 const HAS_ALIASES = {
-    links: 'link', url: 'link', images: 'media', image: 'media', photos: 'media', photo: 'media', video: 'media', videos: 'media'
+    links: 'link', url: 'link', image: 'images', photos: 'images', photo: 'images', video: 'video_link', videos: 'video_link'
 };
 
 const SORT_ALIASES = {
@@ -28,8 +31,9 @@ export const SORT_LABELS = {
     best: 'Best match', new: 'Newest', old: 'Oldest', likes: 'Most liked', retweets: 'Most retweeted'
 };
 
-const OPERATORS = new Set(['any', 'reply', 'to', 'since', 'until', 'before', 'after', 'min_faves', 'min_likes', 'min_retweets', 'min_rts', 'type', 'is', 'has', 'filter', 'sort', 'from']);
+const OPERATORS = new Set(['any', 'reply', 'to', 'since', 'until', 'before', 'after', 'min_faves', 'min_likes', 'min_retweets', 'min_rts', 'min_reposts', 'type', 'is', 'has', 'filter', 'sort', 'from']);
 
+// UTC midnights: dates display in UTC too, so since:/until: match what every viewer sees regardless of timezone.
 const parseDateOperand = (v, end) => {
     const m = /^(\d{4})(?:-(\d{1,2})(?:-(\d{1,2}))?)?$/.exec(v);
     if (!m)
@@ -45,9 +49,12 @@ const parseDateOperand = (v, end) => {
  */
 export function parseQuery(q) {
     const f = {
-        w: [], a: [], n: [], type: [], ntype: [], has: [], nhas: [], rep: [], from: [], nfrom: [], minl: 0, minr: 0, since: 0, until: 0, sr: '', ur: '', sort: '', hl: [], txt: 0
+        w: [], a: [], n: [], type: [], ntype: [], has: [], nhas: [], rep: [], from: [], nfrom: [], minl: 0, minr: 0, maxl: 0, maxr: 0, since: 0, until: 0, sr: '', ur: '', sort: '', hl: [], txt: 0
     };
-    for (let s of q.match(/-?"[^"]*"|\S+/g) || []) {
+    const toks = q.match(/-?"[^"]*"|\S+/g) || [];
+    let og = null;
+    for (let i = 0; i < toks.length; i++) {
+        let s = toks[i];
         const neg = s[0] == '-' && s.length > 1;
         if (neg)
             s = s.slice(1);
@@ -55,17 +62,34 @@ export function parseQuery(q) {
         s = s.replace(/^"|"$/g, '').trim();
         if (!s)
             continue;
+        if (!neg && !qd && s == 'OR') {
+            if (og)
+                continue;
+            if (f.w.length)
+                og = [f.w.pop().r];
+            continue;
+        }
         const l = s.toLowerCase().replace(/[’‘]/g, "'");
         const k = qd ? null : /^([a-z_]+):(.+)$/.exec(l);
         const op = k && OPERATORS.has(k[1]) ? k[1] : '';
         const v = op ? k[2].replace(/^"|"$/g, '') : '';
         if (op) {
-            if (op == 'has' || op == 'filter')
+            if (og) {
+                f.a.push(og);
+                og = null;
+            }
+            if (op == 'filter' && (TYPE_ALIASES[v] || TWEET_TYPE_TESTS[v]))
+                (neg ? f.ntype : f.type).push(TYPE_ALIASES[v] || v);
+            else if (op == 'has' || op == 'filter')
                 (neg ? f.nhas : f.has).push(HAS_ALIASES[v] || v);
             else if (op == 'type' || op == 'is')
                 (neg ? f.ntype : f.type).push(TYPE_ALIASES[v] || v);
             else if (op == 'from')
                 (neg ? f.nfrom : f.from).push(v.replace(/^@/, ''));
+            else if (op == 'min_faves' || op == 'min_likes')
+                if (neg) f.maxl = +v || 0; else f.minl = +v || 0;
+            else if (op == 'min_retweets' || op == 'min_rts' || op == 'min_reposts')
+                if (neg) f.maxr = +v || 0; else f.minr = +v || 0;
             else if (neg) {
             }
             else if (op == 'any') {
@@ -91,24 +115,36 @@ export function parseQuery(q) {
             else if (op == 'before') {
                 f.until = parseDateOperand(v, 0);
             }
-            else if (op == 'min_faves' || op == 'min_likes')
-                f.minl = +v || 0;
-            else if (op == 'min_retweets' || op == 'min_rts')
-                f.minr = +v || 0;
             else if (op == 'sort')
                 f.sort = SORT_ALIASES[v] || '';
             continue;
         }
         const at = /^[@#]/.test(l);
         const r = { r: wordRegex(l, qd || at), at: l[0] == '@' };
-        if (neg)
+        if (neg) {
+            if (og) {
+                f.a.push(og);
+                og = null;
+            }
             f.n.push(r);
+        }
+        else if (og) {
+            og.push(r.r);
+            f.hl.push(l);
+            f.txt = 1;
+            if (toks[i + 1] != 'OR') {
+                f.a.push(og);
+                og = null;
+            }
+        }
         else {
             f.w.push(r);
             f.hl.push(l);
             f.txt = 1;
         }
     }
+    if (og)
+        f.a.push(og);
     f.type = f.type.filter(k => TWEET_TYPE_TESTS[k]);
     f.ntype = f.ntype.filter(k => TWEET_TYPE_TESTS[k]);
     f.hrx = f.hl.length ? new RegExp(WORD_START + '(?:' + f.hl.map(escapeRegex).join('|') + ')[\\p{L}\\p{N}_\']*', 'giu') : null;
@@ -128,17 +164,19 @@ const displayedTweet = t => t.so && t.o ? t.o : t;
  */
 function matchesFilters(t, f) {
     const P = displayedTweet(t);
-    if (P.l < f.minl || P.r < f.minr || t.t < f.since || (f.until && t.t >= f.until))
+    if (P.l < f.minl || (f.maxl && P.l >= f.maxl) || P.r < f.minr || (f.maxr && P.r >= f.maxr) || t.t < f.since || (f.until && t.t >= f.until))
         return 0;
     if (f.type.length && !f.type.some(k => TWEET_TYPE_TESTS[k](t)) || f.ntype.some(k => TWEET_TYPE_TESTS[k](t)))
         return 0;
     const md = P.m.length || t.m.length;
     const lk = P.lk || t.lk;
+    const im = P.m.concat(t.m).some(u => IMG_RX.test(u));
+    const vd = P.m.concat(t.m).some(u => VIDEO_URL_RX.test(u));
     for (const h of f.has)
-        if (h == 'media' && !md || h == 'link' && !lk)
+        if (h == 'media' && !md || h == 'link' && !lk || h == 'images' && !im || h == 'video_link' && !vd)
             return 0;
     for (const h of f.nhas)
-        if (h == 'media' && md || h == 'link' && lk)
+        if (h == 'media' && md || h == 'link' && lk || h == 'images' && im || h == 'video_link' && vd)
             return 0;
     if (f.rep.length && !f.rep.some(r => P.rh.toLowerCase() == r.toLowerCase()))
         return 0;
@@ -196,12 +234,12 @@ export function applyOperator(q, op, v) {
             a.push('sort:' + v);
     }
     else if (op == 'minl') {
-        del(/^min_(?:faves|likes):/i);
+        del(/^-?min_(?:faves|likes):/i);
         if (+v)
             a.push('min_faves:' + v);
     }
     else if (op == 'minr') {
-        del(/^min_(?:retweets|rts):/i);
+        del(/^-?min_(?:retweets|rts|reposts):/i);
         if (+v)
             a.push('min_retweets:' + v);
     }

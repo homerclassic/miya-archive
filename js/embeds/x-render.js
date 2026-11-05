@@ -24,7 +24,7 @@ function renderEmbeddedPost(el, p) {
     const url = `https://x.com/${s}/status/${id}`;
     let dt = '';
     try {
-        dt = new Date(p.t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        dt = new Date(p.t).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
         if (dt == 'Invalid Date')
             dt = '';
     }
