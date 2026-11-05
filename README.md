@@ -2,7 +2,7 @@
 
 The tweet archive of **Miya Black Hearted Cyber Angel Baby** (@BPD_GOD): every tweet, thread, reply, and photo in one place, searchable and browsable.
 
-![Miya Archive screenshot](assets/miya-archive-screenshot-cropped.png)
+![Miya Archive screenshot](assets/miya-archive-screenshot.png)
 
 ## Use it
 
