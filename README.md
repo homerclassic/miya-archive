@@ -1,6 +1,6 @@
 # Miya Archive
 
-The tweet archive of **Miya Black Hearted Cyber Angel Baby** (@BPD_GOD): every tweet, thread, reply, and photo in one place, searchable and browsable.
+The tweet archive of [Miya Black Hearted Cyber Angel Baby](https://wiki.remilia.org/Miya_Black_Hearted_Cyber_Angel_Baby) (@BPD_GOD): every tweet, thread, reply, and photo in one place, searchable and browsable.
 
 ![Miya Archive screenshot](assets/miya-archive-screenshot.png)
 
