@@ -32,7 +32,7 @@ js/
   data/              archive parser, retweet linking, keyword index
   search/            query language, search state, advanced-search dialog
   pages/             profile, timeline, thread, history, explore, search
-  ui/                tweet card, rich text, lightbox, share menu, drawer, shell, skeletons, image events
+  ui/                tweet card, rich text, lightbox, share menu, drawer, shell, skeletons, image events, like/bookmark
   embeds/            quote and link cards, live X embeds
   export/            thread to PDF
 assets/              favicon
@@ -44,6 +44,7 @@ scripts/             dev server and build
 
 - Every dependency is an ES `import` (nothing on `window`).
 - Shared mutable state is the single `state` object in `js/core/state.js`.
+- State machines are explicit: one named field per machine (e.g. `state.loadStatus`, `ptrState`), changed through a single setter, not scattered flags, null checks, or DOM reads.
 - Pages render HTML strings and use delegated event listeners.
 - Side effects live in `init*()` functions called from `main.js`.
 
