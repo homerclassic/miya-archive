@@ -8,7 +8,7 @@ The tweet archive of [Miya Black Hearted Cyber Angel Baby](https://wiki.remilia.
 
 **Browse online:** https://homerclassic.github.io/miya-archive/
 
-**Or download the standalone build** from the [Releases page](https://github.com/homerclassic/miya-archive/releases). It's a single zip that needs no installation or configuration. Unzip it and open `<miya-archive-standalone.html>`.
+**Download the standalone build:** get it from the [Releases page](https://github.com/homerclassic/miya-archive/releases). It's a single zip that needs no installation or configuration. Unzip it and open `<miya-archive-standalone.html>`.
 
 ## Features
 
