@@ -2,8 +2,7 @@
  * Touch pull-to-refresh indicator (X style).
  */
 
-import { $ } from '../core/dom.js';
-import { state } from '../core/state.js';
+import { isOverlayOpen } from '../core/dom.js';
 import { handleRoute, navKey } from '../router.js';
 
 /** Set by initPullToRefresh(); programmatically plays the refresh animation and re-renders the route. */
@@ -23,16 +22,17 @@ export function initPullToRefresh() {
         let sy = 0;
         let sx = 0;
         let dy = 0;
-        let on = 0;
-        let act = 0;
+        /** idle | arming (touch down, gesture not yet recognised) | pulling (indicator follows the finger) | refreshing (past the threshold, re-render pending) */
+        let ptrState = 'idle';
         const TH = 72;
         const set = d => {
             el.style.transform = `translate(-50%,${d * .55 - 44}px) rotate(${d * 3}deg)`;
             el.style.opacity = Math.min(1, d / TH * 1.2);
             pc.style.strokeDashoffset = 100 - 75 * Math.min(1, d / TH);
         };
-        const busy = () => state.lightbox || document.body.classList.contains('dro') || $('#adv');
+        const busy = () => isOverlayOpen();
         const reset = () => {
+            ptrState = 'idle';
             el.classList.add('rs');
             el.style.transform = '';
             el.style.opacity = '';
@@ -42,27 +42,27 @@ export function initPullToRefresh() {
             }, 220);
         };
         addEventListener('touchstart', e => {
-            on = 0;
-            act = 0;
+            if (ptrState != 'idle')
+                return;
             if (e.touches.length != 1 || scrollY > 0 || busy() || navKey(decodeURIComponent(location.hash.slice(2)).split('/')[0]) != '')
                 return;
             sy = e.touches[0].clientY;
             sx = e.touches[0].clientX;
             dy = 0;
-            on = 1;
+            ptrState = 'arming';
             el.classList.remove('rs');
         }, { passive: true });
         addEventListener('touchmove', e => {
-            if (!on)
+            if (ptrState == 'idle')
                 return;
             const t = e.touches[0];
             dy = t.clientY - sy;
             const dx = t.clientX - sx;
-            if (!act) {
+            if (ptrState == 'arming') {
                 if (dy > 10 && dy > Math.abs(dx) * 1.3)
-                    act = 1;
+                    ptrState = 'pulling';
                 else if (dy < -6 || Math.abs(dx) > 14) {
-                    on = 0;
+                    ptrState = 'idle';
                     return;
                 }
                 else
@@ -71,31 +71,33 @@ export function initPullToRefresh() {
             set(Math.min(dy, 150));
         }, { passive: true });
         addEventListener('touchend', () => {
-            if (!on || !act) {
-                on = 0;
-                return;
-            }
-            on = 0;
-            if (dy > TH) {
-                el.classList.add('sp', 'rs');
-                el.style.transform = 'translate(-50%,24px)';
-                el.style.opacity = '1';
-                setTimeout(() => {
-                    handleRoute(true);
+            if (ptrState == 'pulling') {
+                if (dy > TH) {
+                    ptrState = 'refreshing';
+                    el.classList.add('sp', 'rs');
+                    el.style.transform = 'translate(-50%,24px)';
+                    el.style.opacity = '1';
+                    setTimeout(() => {
+                        handleRoute(true);
+                        reset();
+                    }, 550);
+                }
+                else
                     reset();
-                }, 550);
             }
-            else
-                reset();
+            else if (ptrState == 'arming')
+                ptrState = 'idle';
         }, { passive: true });
         addEventListener('touchcancel', () => {
-            if (on && act)
+            if (ptrState == 'pulling')
                 reset();
-            on = 0;
+            else if (ptrState == 'arming')
+                ptrState = 'idle';
         }, { passive: true });
         triggerPullToRefresh = () => {
-            if (act || el.classList.contains('sp'))
+            if (ptrState != 'idle')
                 return;
+            ptrState = 'refreshing';
             const go = () => {
                 el.classList.remove('rs');
                 el.classList.add('sp', 'rs');

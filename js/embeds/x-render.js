@@ -31,6 +31,7 @@ function renderEmbeddedPost(el, p) {
     catch (e) {
     }
     el.className = 'qcard qx';
+    el.dataset.embedState = 'loaded';
     el.removeAttribute('aria-busy');
     el.dataset.ext = el.dataset.xurl = url;
     const av = p.a ? remoteAvatar().replace(/<\/div>$/, `<img alt="" loading="lazy" decoding="async" src="${escapeHtml(p.a.replace('_normal.', '_bigger.'))}" data-fallback="remove"></div>`) : remoteAvatar();
@@ -45,6 +46,7 @@ function renderEmbeddedPost(el, p) {
 
 function showEmbedSkeleton(el) {
     el.className = 'qcard qx';
+    el.dataset.embedState = 'loading';
     el.setAttribute('aria-busy', 'true');
     el.innerHTML = '<div class="qhd"><div class="qsk qsa"></div><div class="qid"><div class="qsk" style="width:38%;height:12px"></div><div class="qsk" style="width:26%;height:10px;margin-top:7px"></div></div></div><div class="qsk" style="width:94%;height:12px;margin-top:16px"></div><div class="qsk" style="width:72%;height:12px;margin-top:9px"></div>';
 }
@@ -57,6 +59,7 @@ const embedIcon = d => `<div class="qsa qic">${icon(d, 18)}</div>`;
 function renderUnavailable(el, text) {
     const t = (text || '').replace(/\s*Learn more\.?\s*$/i, '').trim();
     el.className = 'qcard qx qgone';
+    el.dataset.embedState = 'unavailable';
     el.removeAttribute('aria-busy');
     el.innerHTML = embedHeader(embedIcon('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'), 'This post isn’t available', profileAnchor(el.dataset.xu, 'nm', '@' + escapeHtml(el.dataset.xu))) + (t ? `<div class="qtx mu">${escapeHtml(t)}</div>` : '') + openOnXLink(el);
 }
@@ -64,6 +67,7 @@ function renderUnavailable(el, text) {
 /* Couldn't reach X at all: retryable, and says so instead of implying the post is gone. */
 function renderLoadError(el) {
     el.className = 'qcard qx qgone qerr';
+    el.dataset.embedState = 'error';
     el.removeAttribute('aria-busy');
     el.innerHTML = embedHeader(embedIcon('<circle cx="12" cy="12" r="9"/><path d="M12 7.5V13M12 16.5v.01"/>'), 'Couldn’t load this post', profileAnchor(el.dataset.xu, 'nm', '@' + escapeHtml(el.dataset.xu))) + `<div class="qtx mu">${navigator.onLine ? 'X’s embed service didn’t respond.' : 'You’re offline.'}</div>` + openOnXLink(el);
 }

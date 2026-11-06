@@ -2,8 +2,7 @@
  * Small mobile-only behaviours: hide bars while scrolling down, swipe between tabs, profile header state.
  */
 
-import { $, navigate } from '../core/dom.js';
-import { state } from '../core/state.js';
+import { $, isOverlayOpen, navigate } from '../core/dom.js';
 
 /* ===== mobile: hide the top bar, tabs and bottom nav while scrolling down, bring them back on scroll up (like the X app) ===== */
 /* ===== mobile: swipe sideways to move between the tabs of a page (For you ⇄ Threads …, Tweets ⇄ Tweets & replies ⇄ Media) ===== */
@@ -75,7 +74,7 @@ export function initMobileBehaviors() {
         };
         addEventListener('touchstart', e => {
             ok = 0;
-            if (!mq.matches || e.touches.length != 1 || document.body.classList.contains('dro') || (typeof state.lightbox != 'undefined' && state.lightbox) || !$('.tabs2'))
+            if (!mq.matches || e.touches.length != 1 || isOverlayOpen() || !$('.tabs2'))
                 return;
             const t = e.touches[0];
             if (t.clientX <= 26 || t.clientX >= innerWidth - 26)

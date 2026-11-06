@@ -5,6 +5,7 @@
 import { $, encodeUri, navigate } from '../core/dom.js';
 import { state } from '../core/state.js';
 import { renderSearchResults } from '../pages/search.js';
+import { getActiveList } from '../ui/lazy-list.js';
 
 export const isSearchRoute = () => location.hash.startsWith('#/search/');
 
@@ -12,7 +13,16 @@ export function setSearchQuery(q, o = {}) {
     state.searchQuery = q;
     try {
         const u = '#/search/' + encodeUri(q);
-        o.push ? (state.currentHistoryKey != null && state.scrollMemory.set(state.currentHistoryKey, { y: scrollY, n: state.renderedCount || 0 }), history.pushState({ k: ++state.historyKeyCounter }, '', u), state.currentHistoryKey = state.historyKeyCounter) : history.replaceState(history.state, '', u);
+        if (o.push) {
+            if (state.nav.key != null) {
+                const list = getActiveList();
+                state.scrollMemory.set(state.nav.key, { y: scrollY, n: list ? list.rendered : 0 });
+            }
+            history.pushState({ k: ++state.historyKeyCounter }, '', u);
+            state.nav.key = state.historyKeyCounter;
+        }
+        else
+            history.replaceState(history.state, '', u);
     }
     catch (e) {
     }

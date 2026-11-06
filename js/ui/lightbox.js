@@ -32,6 +32,8 @@ export function closeLightbox() {
 }
 
 export function showLightboxImage(i) {
+    if (!state.lightbox)
+        return;
     const L = state.lightbox;
     L.i = i;
     if (L.g) {

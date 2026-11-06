@@ -3,13 +3,12 @@
  */
 
 import { encodeUri, navigate, scrollToTop } from './core/dom.js';
-import { formatCount } from './core/format.js';
-import { ICON_BOOKMARK_FILLED_PATH, ICON_BOOKMARK_PATH, ICON_LIKE_FILLED_PATH, ICON_LIKE_PATH } from './core/icons.js';
 import { state } from './core/state.js';
-import { addRecentSearch, persistHistory } from './core/storage.js';
+import { addRecentSearch } from './core/storage.js';
 import { handleRoute, navKey } from './router.js';
 import { isSearchRoute } from './search/search-state.js';
 import { openDrawer } from './ui/drawer.js';
+import { setBookmark, setLike } from './ui/like-bookmark.js';
 import { openLightbox } from './ui/lightbox.js';
 import { draftPostOnX, openShareMenu } from './ui/post-actions.js';
 import { triggerPullToRefresh } from './ui/pull-to-refresh.js';
@@ -93,44 +92,10 @@ export function initEvents() {
             const id = tw && tw.dataset.id;
             if (id) {
                 e.stopPropagation();
-                if (ab.classList.contains('p')) {
-                    const on = !state.likedIds.has(id);
-                    if (on && navigator.vibrate)
-                        try {
-                            navigator.vibrate(8);
-                        }
-                        catch (e) {
-                        }
-                    on ? state.likedIds.add(id) : state.likedIds.delete(id);
-                    document.querySelectorAll(`.tw[data-id="${id}"] .a.p`).forEach(x => {
-                        x.classList.toggle('on', on);
-                        // The hollow and filled hearts are different paths, so
-                        // the shape has to be swapped too — the `on` class
-                        // only changes the colour, and a hollow glyph filled
-                        // with colour still looks hollow.
-                        const p = x.querySelector('svg path');
-                        if (p)
-                            p.setAttribute('d', on ? ICON_LIKE_FILLED_PATH : ICON_LIKE_PATH);
-                        if (on) {
-                            x.classList.add('pop');
-                            setTimeout(() => x.classList.remove('pop'), 500);
-                        }
-                        const n = +x.dataset.b + (on ? 1 : 0);
-                        x.querySelector('i').textContent = n ? formatCount(n) : '';
-                    });
-                    document.querySelectorAll(`.tw[data-id="${id}"] .lkn`).forEach(x => x.textContent = (+x.dataset.b + (on ? 1 : 0)).toLocaleString());
-                }
-                else {
-                    const on = !state.bookmarkedIds.includes(id);
-                    state.bookmarkedIds = on ? [...state.bookmarkedIds, id] : state.bookmarkedIds.filter(x => x != id);
-                    document.querySelectorAll(`.tw[data-id="${id}"] .a.k`).forEach(x => {
-                        x.classList.toggle('on', on);
-                        const p = x.querySelector('svg path');
-                        if (p)
-                            p.setAttribute('d', on ? ICON_BOOKMARK_FILLED_PATH : ICON_BOOKMARK_PATH);
-                    });
-                }
-                persistHistory();
+                if (ab.classList.contains('p'))
+                    setLike(id, !state.likedIds.has(id));
+                else
+                    setBookmark(id, !state.bookmarkedIds.includes(id));
                 return;
             }
         }

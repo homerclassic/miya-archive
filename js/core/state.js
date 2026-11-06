@@ -13,6 +13,10 @@ export const state = {
   indexById: {},
   /** the archive owner's handle (the most replied-to account) */
   ownerHandle: 'me',
+  /** archive data lifecycle: boot (before startApp) -> loading -> ready | error */
+  loadStatus: 'boot',
+  /** the fetch/parse error when loadStatus is 'error' (null otherwise) */
+  loadError: null,
   /** search highlight regex for the current query */
   highlightRegex: null,
   /** current search string */
@@ -29,8 +33,8 @@ export const state = {
   bookmarkedIds: [],
   /** timeline sort direction (1 = oldest first) */
   oldestFirst: 1,
-  /** query being edited in the advanced-search dialog (null = closed) */
-  advancedQuery: null,
+  /** advanced-search dialog: open flag plus the draft query being edited (null = closed) */
+  advDialog: { open: false, draft: '' },
   /** cached year / month / day availability */
   periodsCache: null,
   /** recent searches */
@@ -41,10 +45,6 @@ export const state = {
   scrollMemory: new Map(),
   /** monotonic key for history entries */
   historyKeyCounter: Date.now(),
-  /** key of the history entry being shown */
-  currentHistoryKey: null,
-  /** scroll position to restore after the next render */
-  pendingRestore: null,
-  /** how many rows the current lazy list has rendered */
-  renderedCount: 0,
+  /** current navigation: the history key being shown, which way we got here, and the scroll position to restore (back only) */
+  nav: { key: null, direction: 'forward', restore: null },
 };

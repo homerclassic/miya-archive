@@ -12,12 +12,14 @@ const chipButton = (on, op, v, l) => `<button class="chip${on ? ' on' : ''}" dat
 const chipGroup = (h, b) => `<div class="cg"><div class="cl">${h}</div><div class="cr">${b}</div></div>`;
 
 const closeAdvancedSearch = () => {
-    state.advancedQuery = null;
+    state.advDialog.open = false;
+    state.advDialog.draft = '';
     renderAdvancedModal();
 };
 
 export function openAdvancedSearch() {
-    state.advancedQuery = isSearchRoute() ? state.searchQuery : '';
+    state.advDialog.open = true;
+    state.advDialog.draft = isSearchRoute() ? state.searchQuery : '';
     renderAdvancedModal();
 }
 
@@ -43,7 +45,7 @@ const withDates = (q, s, u) => {
 
 function renderAdvancedModal() {
     let m = $('#adv');
-    if (state.advancedQuery == null) {
+    if (!state.advDialog.open) {
         m && m.remove();
         return;
     }
@@ -56,24 +58,25 @@ function renderAdvancedModal() {
             if (e.target == m || e.target.closest('[data-cl]'))
                 return closeAdvancedSearch();
             if (e.target.closest('[data-sub]')) {
-                const q = withDates(state.advancedQuery, m.querySelector('#adv-since').value, m.querySelector('#adv-until').value);
-                state.advancedQuery = null;
+                const q = withDates(state.advDialog.draft, m.querySelector('#adv-since').value, m.querySelector('#adv-until').value);
+                state.advDialog.open = false;
+                state.advDialog.draft = '';
                 renderAdvancedModal();
                 isSearchRoute() ? setSearchQuery(q, { push: 1 }) : navigate('/search/' + encodeUri(q));
                 return;
             }
             const b = e.target.closest('[data-op]');
             if (b) {
-                state.advancedQuery = applyOperator(state.advancedQuery, b.dataset.op, b.dataset.v);
+                state.advDialog.draft = applyOperator(state.advDialog.draft, b.dataset.op, b.dataset.v);
                 renderAdvancedModal();
             }
         };
         m.onchange = e => {
             if (e.target.id == 'adv-since' || e.target.id == 'adv-until')
-                state.advancedQuery = withDates(state.advancedQuery, m.querySelector('#adv-since').value, m.querySelector('#adv-until').value);
+                state.advDialog.draft = withDates(state.advDialog.draft, m.querySelector('#adv-since').value, m.querySelector('#adv-until').value);
         };
     }
-    const f = parseQuery(state.advancedQuery);
+    const f = parseQuery(state.advDialog.draft);
     const eff = f.sort || (f.txt ? 'best' : 'new');
     let h = `<div class="mb"><div class="mh"><button class="x" data-cl="1" aria-label="Close" style="font-size:22px;padding:4px 10px">✕</button><b>Advanced search</b><button class="go" data-sub="1">Search</button></div><div class="mc">`;
     h += chipGroup('Show', [['', 'Everything'], ['original', 'Originals'], ['reply', 'Replies'], ['thread', 'Threads'], ['rt', 'Retweets'], ['quote', 'Quotes']].map(([k, l]) => chipButton(k ? f.type.length == 1 && f.type[0] == k : !f.type.length && !f.ntype.length, 'type', k, l)).join(''));
@@ -94,7 +97,7 @@ function renderAdvancedModal() {
  */
 export function initAdvancedModal() {
     document.addEventListener('keydown', e => {
-        if (e.key == 'Escape' && state.advancedQuery != null)
+        if (e.key == 'Escape' && state.advDialog.open)
             closeAdvancedSearch();
     });
 }

@@ -2,7 +2,7 @@
  * Swipe from the left edge to open the mobile drawer, swipe left to close it.
  */
 
-import { $ } from '../core/dom.js';
+import { $, isOverlayOpen } from '../core/dom.js';
 import { state } from '../core/state.js';
 
 /* ===== swipe from left edge opens menu, swipe left closes it ===== */
@@ -24,10 +24,16 @@ export function initDrawerSwipe() {
         addEventListener('touchstart', e => {
             m = 0;
             drag = 0;
-            if (!mq.matches || e.touches.length != 1 || state.lightbox || $('#adv') || !D())
+            if (!mq.matches || e.touches.length != 1 || !D())
+                return;
+            const open = document.body.classList.contains('dro');
+            // An overlay blocks the swipe. The drawer itself is the exception: when it is open the swipe is the
+            // close gesture, so only the other overlays (lightbox, advanced search, share menu) block it then.
+            if (!open && isOverlayOpen())
+                return;
+            if (open && (state.lightbox || $('#adv') || $('#shm')))
                 return;
             const t = e.touches[0];
-            const open = document.body.classList.contains('dro');
             if (open || t.clientX <= 22) {
                 m = open ? 2 : 1;
                 sx = t.clientX;

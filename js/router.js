@@ -10,6 +10,7 @@ import { renderProfile } from './pages/profile.js';
 import { renderSearchPage } from './pages/search.js';
 import { renderThread } from './pages/thread.js';
 import { renderTimelineAt } from './pages/timeline.js';
+import { getActiveList } from './ui/lazy-list.js';
 
 export const navKey = a => a == 'search' || a == 'history' ? a : a == 'bookmarks' ? 'history' : a == 'tweets' || a == 'media' || a == 't' || a == 'tweet' || a == 'at' ? 'tweets' : '';
 
@@ -24,7 +25,7 @@ export function handleRoute(fresh) {
     const [a, ...r] = h.split('/');
     const b = r.join('/');
     document.querySelectorAll('nav a[data-n], #dr a[data-n]').forEach(x => x.classList.toggle('on', x.dataset.n == navKey(a)));
-    if (!state.tweets.length)
+    if (state.loadStatus !== 'ready')
         return;
     const sq = $('#sq');
     if (sq && document.activeElement !== sq)
@@ -69,20 +70,26 @@ catch (e) {
 
 /**
  * Remember the scroll position of the page we are leaving so Back can restore it.
+ * The row count comes from the list on screen, so a Back navigation can pre-render that many rows before scrolling.
  */
 function saveScrollPosition(fresh) {
-    if (state.currentHistoryKey == null || fresh)
+    if (state.nav.key == null || fresh)
         return;
     const k = history.state && history.state.k;
-    if (k !== state.currentHistoryKey)
-        state.scrollMemory.set(state.currentHistoryKey, { y: scrollY, n: state.renderedCount || 0 });
+    if (k !== state.nav.key) {
+        const list = getActiveList();
+        state.scrollMemory.set(state.nav.key, { y: scrollY, n: list ? list.rendered : 0 });
+    }
 }
 
+/**
+ * Work out which history entry we are showing and which way we got here, and record it once in state.nav.
+ * A key already in scrollMemory (and not the one we are on) means Back/forward to a visited page, whose scroll position we restore.
+ */
 function assignRouteKey(fresh) {
-    state.renderedCount = 0;
     const st = history.state;
     let k = st && st.k;
-    let back = false;
+    let direction = 'forward';
     if (k == null) {
         k = ++state.historyKeyCounter;
         try {
@@ -91,22 +98,24 @@ function assignRouteKey(fresh) {
         catch (e) {
         }
     }
-    else if (!fresh)
-        back = state.scrollMemory.has(k) && k !== state.currentHistoryKey;
-    state.pendingRestore = back ? state.scrollMemory.get(k) : null;
+    else if (fresh)
+        direction = 'refresh';
+    else if (state.scrollMemory.has(k) && k !== state.nav.key)
+        direction = 'back';
+    state.nav = { key: k, direction, restore: direction == 'back' ? state.scrollMemory.get(k) : null };
     return k;
 }
 
 function finishRoute(k, a) {
-    state.currentHistoryKey = k;
-    if (state.pendingRestore && a != 'at') {
-        const y = state.pendingRestore.y;
-        const ap = () => scrollTo(0, y);
-        ap();
-        requestAnimationFrame(ap);
-        setTimeout(ap, 250);
+    const restore = state.nav.restore;
+    state.nav.restore = null;
+    if (restore && a != 'at') {
+        // The list renders the saved rows synchronously while the page renders, so by the time we are here the
+        // target rows are in the DOM and one scroll lands it (the list handle confirms the count).
+        const list = getActiveList();
+        if (!list || list.rendered >= restore.n)
+            scrollTo(0, restore.y);
     }
-    state.pendingRestore = null;
 }
 
 /**
@@ -114,16 +123,4 @@ function finishRoute(k, a) {
  */
 export function initRouter() {
     addEventListener('hashchange', () => handleRoute());
-    document.addEventListener('keydown', e => {
-        if (e.key == 'Escape') {
-            const w = $('#sw');
-            w && w.classList.remove('open');
-        }
-    });
-    document.addEventListener('mousedown', e => {
-        if (!e.target.closest('#sw')) {
-            const w = $('#sw');
-            w && w.classList.remove('open');
-        }
-    });
 }
