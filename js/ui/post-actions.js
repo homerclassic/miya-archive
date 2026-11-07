@@ -8,35 +8,63 @@ import { state } from '../core/state.js';
 import { collectThreadIds } from '../export/thread-document.js';
 import { downloadThreadPdf } from '../export/thread-export.js';
 
-let shareMenuOpenedAt = 0;
+/**
+ * Named share-menu state: the single source of truth for whether the menu
+ * is open, which tweet's menu it is, and until when a scroll event right
+ * after opening should be ignored. The #shm element, its dataset.id, and
+ * the invoking button's .a.s.on class are mirrors of this state, synced
+ * only by setShareMenu().
+ */
+const shareMenu = { open: false, tweetId: null, justOpenedUntil: 0 };
 
-export const closeShareMenu = () => {
-    const m = $('#shm');
-    if (m) {
-        m.remove();
+/**
+ * Single setter for the share menu. Opening creates the #shm element with
+ * dataset.id set to the tweet id and marks the invoking button .on;
+ * closing removes the element, clears the tweet id, and clears .on from
+ * every share button. All three mirrors are set/cleared here and nowhere
+ * else.
+ */
+function setShareMenu(open, tweetId = null, btn = null) {
+    if (!open) {
+        shareMenu.open = false;
+        shareMenu.tweetId = null;
+        shareMenu.justOpenedUntil = 0;
+        const m = $('#shm');
+        if (m)
+            m.remove();
         document.querySelectorAll('.a.s.on').forEach(x => x.classList.remove('on'));
+        return;
     }
-};
+    shareMenu.open = true;
+    shareMenu.tweetId = tweetId;
+    shareMenu.justOpenedUntil = Date.now() + 250;
+    const prev = $('#shm');
+    if (prev)
+        prev.remove();
+    document.querySelectorAll('.a.s.on').forEach(x => x.classList.remove('on'));
+    if (btn)
+        btn.classList.add('on');
+    const m = document.createElement('div');
+    m.id = 'shm';
+    m.dataset.id = tweetId;
+    m.setAttribute('role', 'menu');
+    document.body.append(m);
+}
+
+export const closeShareMenu = () => setShareMenu(false);
 
 /**
  * Open the Copy link / Download thread menu next to the share button.
  */
 export function openShareMenu(btn) {
     const id = btn.dataset.sh;
-    const was = $('#shm');
-    if (was && was.dataset.id == id) {
-        closeShareMenu();
+    if (shareMenu.open && shareMenu.tweetId == id) {
+        setShareMenu(false);
         return;
     }
-    closeShareMenu();
-    shareMenuOpenedAt = Date.now();
-    btn.classList.add('on');
-    const m = document.createElement('div');
-    m.id = 'shm';
-    m.dataset.id = id;
-    m.setAttribute('role', 'menu');
+    setShareMenu(true, id, btn);
+    const m = $('#shm');
     m.innerHTML = `<button type="button" role="menuitem" data-a="link">${filledIcon(ICON_LINK_PATH, 18)}Copy link</button>${collectThreadIds(id).length > 1 ? `<button type="button" role="menuitem" data-a="pdf">${icon(ICONS.dl, 18)}Download thread as PDF</button>` : ''}`;
-    document.body.append(m);
     const r = btn.getBoundingClientRect();
     const w = m.offsetWidth;
     const h = m.offsetHeight;
@@ -107,7 +135,7 @@ export function initPostActions() {
             closeShareMenu();
     });
     addEventListener('scroll', () => {
-        if (Date.now() - shareMenuOpenedAt > 250)
+        if (Date.now() > shareMenu.justOpenedUntil)
             closeShareMenu();
     }, { passive: true });
     document.addEventListener('keydown', e => {

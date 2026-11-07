@@ -21,9 +21,31 @@ export const navigate = p => {
     location.hash = '#' + p;
 };
 
-let toastTimer;
+/**
+ * Named toast state: the single source of truth for whether the toast is
+ * visible and which pending hide timer (if any) will hide it. The #toast
+ * element's .on class is a mirror of this state, synced only by setToast().
+ */
+const toast = { visible: false, hideTimer: null };
 
-export function showToast(m) {
+/**
+ * Single setter for the toast. Showing creates the #toast element if
+ * needed, sets its text, marks it visible, and (re)arms the 2600ms hide;
+ * hiding clears any pending timer, marks it hidden, and removes .on.
+ */
+function setToast(visible, message = '') {
+    if (!visible) {
+        toast.visible = false;
+        if (toast.hideTimer !== null) {
+            clearTimeout(toast.hideTimer);
+            toast.hideTimer = null;
+        }
+        const t = $('#toast');
+        if (t)
+            t.classList.remove('on');
+        return;
+    }
+    toast.visible = true;
     let t = $('#toast');
     if (!t) {
         t = document.createElement('div');
@@ -31,10 +53,15 @@ export function showToast(m) {
         t.setAttribute('role', 'status');
         document.body.append(t);
     }
-    t.textContent = m;
+    t.textContent = message;
     t.classList.add('on');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('on'), 2600);
+    if (toast.hideTimer !== null)
+        clearTimeout(toast.hideTimer);
+    toast.hideTimer = setTimeout(() => setToast(false), 2600);
+}
+
+export function showToast(m) {
+    setToast(true, m);
 }
 
 /* ===== tap header / active tab: scroll to top, then refresh ===== */

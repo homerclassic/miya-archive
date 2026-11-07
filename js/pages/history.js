@@ -34,14 +34,16 @@ export function renderHistoryPage(tab) {
         else
             l.innerHTML = L.length ? em('No results', 'Nothing in your ' + tab + ' matches that.') : tab == 'likes' ? em('Tweets you like show up here', 'Tap the heart on any tweet.') : em('Save tweets for later', 'Tap the bookmark on any tweet to keep it here.');
     };
-    let tm;
+    // Named pending-search state (null = none pending), not a bare timeout ID.
+    let pendingSearch = null;
     hq.oninput = () => {
-        clearTimeout(tm);
-        tm = setTimeout(draw, 120);
+        clearTimeout(pendingSearch);
+        pendingSearch = setTimeout(() => { pendingSearch = null; draw(); }, 120);
     };
     hq.onkeydown = e => {
         if (e.key == 'Enter') {
-            clearTimeout(tm);
+            clearTimeout(pendingSearch);
+            pendingSearch = null;
             draw();
             hq.blur();
         }

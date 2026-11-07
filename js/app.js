@@ -15,7 +15,9 @@ import { renderShell } from './ui/shell.js';
  */
 function loadArchive(txt) {
     state.keywordCounts = null;
+    state.keywordCountsStatus = 'unbuilt';
     state.forYouFeed = null;
+    state.forYouFeedStatus = 'unbuilt';
     state.tweets = parseArchive(txt).sort((a, b) => a.t - b.t);
     state.tweetsById = {};
     state.repliesByParent = {};

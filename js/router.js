@@ -10,6 +10,7 @@ import { renderProfile } from './pages/profile.js';
 import { renderSearchPage } from './pages/search.js';
 import { renderThread } from './pages/thread.js';
 import { renderTimelineAt } from './pages/timeline.js';
+import { syncSearchBoxes } from './search/search-state.js';
 import { getActiveList } from './ui/lazy-list.js';
 
 export const navKey = a => a == 'search' || a == 'history' ? a : a == 'bookmarks' ? 'history' : a == 'tweets' || a == 'media' || a == 't' || a == 'tweet' || a == 'at' ? 'tweets' : '';
@@ -19,17 +20,24 @@ export const navKey = a => a == 'search' || a == 'history' ? a : a == 'bookmarks
  */
 export function handleRoute(fresh) {
     saveScrollPosition(fresh);
-    if (fresh)
+    if (fresh) {
         state.forYouFeed = null;
+        state.forYouFeedStatus = 'unbuilt';
+    }
     const h = decodeURIComponent(location.hash.slice(2));
     const [a, ...r] = h.split('/');
     const b = r.join('/');
+    // The single named read for "what page are we on" (call sites read state.route, not the hash).
+    state.route = { section: a, rest: b };
+    document.body.dataset.page = a;
     document.querySelectorAll('nav a[data-n], #dr a[data-n]').forEach(x => x.classList.toggle('on', x.dataset.n == navKey(a)));
     if (state.loadStatus !== 'ready')
         return;
+    // Sync the sidebar box to the route's query (or clear it off the search page),
+    // unless the user is typing in it. '#qm' is the excluded box: renderSearchPage owns it.
     const sq = $('#sq');
     if (sq && document.activeElement !== sq)
-        sq.value = a == 'search' ? b : '';
+        syncSearchBoxes(a == 'search' ? b : '', '#qm');
     scrollTo(0, 0);
     const _k = assignRouteKey(fresh);
     switch (a) {
@@ -62,6 +70,11 @@ export function handleRoute(fresh) {
     finishRoute(_k, a);
 }
 
+/** Whether the current hashchange was caused by a browser back/forward (popstate),
+    not a programmatic navigate. Observed from the popstate event, which fires before
+    hashchange on back/forward and never fires for a programmatic navigate. */
+let navigatedByPopstate = false;
+
 try {
     history.scrollRestoration = 'manual';
 }
@@ -84,7 +97,8 @@ function saveScrollPosition(fresh) {
 
 /**
  * Work out which history entry we are showing and which way we got here, and record it once in state.nav.
- * A key already in scrollMemory (and not the one we are on) means Back/forward to a visited page, whose scroll position we restore.
+ * The direction is observed from the navigation event: a popstate (browser back/forward) means we are
+ * returning to a visited page, whose scroll position we restore; a programmatic navigate means forward.
  */
 function assignRouteKey(fresh) {
     const st = history.state;
@@ -100,8 +114,10 @@ function assignRouteKey(fresh) {
     }
     else if (fresh)
         direction = 'refresh';
-    else if (state.scrollMemory.has(k) && k !== state.nav.key)
+    else if (navigatedByPopstate && k !== state.nav.key)
         direction = 'back';
+    // the popstate flag is consumed here; a later programmatic navigate must not see it
+    navigatedByPopstate = false;
     state.nav = { key: k, direction, restore: direction == 'back' ? state.scrollMemory.get(k) : null };
     return k;
 }
@@ -122,5 +138,6 @@ function finishRoute(k, a) {
  * Registers this module's global event listeners. Called once from main.js.
  */
 export function initRouter() {
+    addEventListener('popstate', () => { navigatedByPopstate = true; });
     addEventListener('hashchange', () => handleRoute());
 }

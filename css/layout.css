@@ -60,6 +60,19 @@ nav>a.lg {
   padding: 10px 12px;
 }
 
+/* divider between the page links and the Reader / Quick search toggles (desktop left column only) */
+#nav .drsep {
+  height: 1px;
+  background: var(--bd);
+  margin: 8px 0;
+}
+
+@media (max-width: 700px) {
+  #nav .drsep {
+    display: none;
+  }
+}
+
 .acct {
   margin-top: auto;
   margin-bottom: 12px;
@@ -86,27 +99,19 @@ main {
   min-height: 100vh;
 }
 
-aside {
-  width: 350px;
-  padding: 8px 16px;
-  align-self: flex-start;
-}
-
-@media (min-height: 800px) {
-  aside {
-    position: sticky;
-    top: 0;
-  }
-}
-
-.nsr {
+/* search page: the centre column already has the search box and Advanced search, so hide the right column's search box but keep its width, or the columns shift */
+body[data-page="search"] #side .sbs {
   display: none;
 }
 
-@media (max-width: 1004px) {
-  .nsr {
-    display: flex;
-  }
+/* the right-hand search column sticks to the top while scrolling, so the search box is always in reach */
+aside {
+  width: 350px;
+  flex: none;
+  padding: 8px 16px;
+  align-self: flex-start;
+  position: sticky;
+  top: 0;
 }
 
 .nar {
@@ -417,11 +422,11 @@ nav .im,
     order: 2;
   }
 
-  nav>a[data-n=tweets] {
+  nav>a[data-n=history] {
     order: 3;
   }
 
-  nav>a[data-n=history] {
+  nav>a[data-n=tweets] {
     order: 4;
   }
 
@@ -443,7 +448,8 @@ nav .im,
 
   nav,
   .hd0,
-  .tabs2 {
+  .tabs2,
+  .sh {
     transition: transform .28s cubic-bezier(.2,.8,.2,1),top .28s cubic-bezier(.2,.8,.2,1);
   }
 

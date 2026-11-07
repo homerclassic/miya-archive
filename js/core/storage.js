@@ -4,7 +4,6 @@
  */
 
 import { state } from './state.js';
-import { renderSideCard } from '../ui/shell.js';
 
 try {
     state.likedIds = new Set(JSON.parse(localStorage.lk || '[]'));
@@ -49,5 +48,4 @@ export const addRecentSearch = q => {
         return;
     state.recentSearches = [q, ...state.recentSearches.filter(x => x != q)].slice(0, 8);
     saveRecentSearches();
-    renderSideCard();
 };

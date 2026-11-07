@@ -12,7 +12,7 @@ import { tweetCard } from '../ui/tweet-card.js';
 /**
  * Post page: ancestors, the focused tweet, then every reply in depth-first order.
  */
-export function renderThread(id, force) {
+export function renderThread(id) {
     const t = state.tweetsById[id];
     if (!t)
         return renderProfile();

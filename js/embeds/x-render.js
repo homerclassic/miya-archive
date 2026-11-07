@@ -14,6 +14,7 @@ const VERIFIED_BADGE = '<span class="qvf" title="Verified"><svg viewBox="0 0 24 
 
 const compactNumber = new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 });
 
+/* URL cache, not state: memoizes the computed URL on the element so it is not rebuilt on every retry. */
 const embedUrl = el => el.dataset.xurl || (el.dataset.xurl = el.dataset.ext || `https://x.com/${el.dataset.xu}/status/${el.dataset.xid}`);
 
 const embedHeader = (av, name, sub, extra) => `<div class="qhd">${av}<div class="qid"><div class="qnm"><b>${name}</b>${extra || ''}</div><div class="qsub">${sub}</div></div></div>`;
@@ -98,7 +99,7 @@ export function initXRender() {
         showEmbedSkeleton(el);
         hydrateEmbed(el);
     }, true);
-    addEventListener('online', () => document.querySelectorAll('.qx.qerr').forEach(el => {
+    addEventListener('online', () => document.querySelectorAll('.qx[data-embed-state="error"]').forEach(el => {
         forgetPost(el.dataset.xid);
         showEmbedSkeleton(el);
         hydrateEmbed(el);
@@ -110,10 +111,9 @@ export function initXRender() {
                     continue;
                 const l = n.matches('.qx[data-xid]') ? [n] : [...n.querySelectorAll('.qx[data-xid]')];
                 l.forEach(e => {
-                    if (!e.dataset.h) {
-                        e.dataset.h = 1;
+                    /* Hydration is derived from the named embed state: an element with no embedState has not been observed yet. */
+                    if (!e.dataset.embedState)
                         embedObserver.observe(e);
-                    }
                 });
             }
     }).observe(document.body, { childList: true, subtree: true });

@@ -22,7 +22,7 @@ export function initPullToRefresh() {
         let sy = 0;
         let sx = 0;
         let dy = 0;
-        /** idle | arming (touch down, gesture not yet recognised) | pulling (indicator follows the finger) | refreshing (past the threshold, re-render pending) */
+        /** idle | arming (touch down, gesture not yet recognised) | pulling (indicator follows the finger) | refreshing (past the threshold, re-render pending) | resetting (220ms slide-back after reset, then idle) */
         let ptrState = 'idle';
         const TH = 72;
         const set = d => {
@@ -30,15 +30,16 @@ export function initPullToRefresh() {
             el.style.opacity = Math.min(1, d / TH * 1.2);
             pc.style.strokeDashoffset = 100 - 75 * Math.min(1, d / TH);
         };
-        const busy = () => isOverlayOpen();
+        const busy = () => ptrState != 'idle' || isOverlayOpen();
         const reset = () => {
-            ptrState = 'idle';
+            ptrState = 'resetting';
             el.classList.add('rs');
             el.style.transform = '';
             el.style.opacity = '';
             setTimeout(() => {
                 el.classList.remove('rs', 'sp');
                 pc.style.strokeDashoffset = '';
+                ptrState = 'idle';
             }, 220);
         };
         addEventListener('touchstart', e => {
@@ -53,7 +54,7 @@ export function initPullToRefresh() {
             el.classList.remove('rs');
         }, { passive: true });
         addEventListener('touchmove', e => {
-            if (ptrState == 'idle')
+            if (ptrState == 'idle' || ptrState == 'resetting')
                 return;
             const t = e.touches[0];
             dy = t.clientY - sy;

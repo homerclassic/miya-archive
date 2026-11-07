@@ -45,81 +45,120 @@ export function attachLightboxGestures() {
             clamp();
         ap(tr);
     };
-    let m = 0;
-    let lock = '';
-    let sx = 0;
-    let sy = 0;
-    let bx = 0;
-    let by = 0;
-    let d0 = 1;
-    let s0 = 1;
-    let smx = 0;
-    let smy = 0;
-    let lt = 0;
-    let lx = 0;
-    let ly = 0;
-    let t0 = 0;
+    /**
+     * Gesture recognizer state machine (the recognition state; the zoom/pan
+     * itself lives in L.g = { s, x, y } and is unchanged).
+     *
+     * phase: 'idle'          - no touch in progress
+     *        'undecided'     - one finger down, direction not yet decided
+     *        'pan'           - one finger down, panning the zoomed image
+     *        'dismiss'       - one finger down, vertical dismiss in progress
+     *        'swipe'         - one finger down, horizontal swipe in progress
+     *        'pinch'         - two fingers down, pinching to zoom
+     *        'tap-pending'   - no touch, one tap seen, waiting for a second tap
+     *          (a pinch that drops to one finger returns to 'undecided').
+     *
+     * Measurements held with the phase, so no gesture fact lives in a
+     * scattered local: startX/startY = touch start point, baseX/baseY =
+     * image offset at gesture start, pinchDist/pinchScale/pinchMidX/pinchMidY
+     * = pinch start distance/scale and midpoint (relative to centre),
+     * lastTapTime/lastTapX/lastTapY = previous tap (double-tap detection),
+     * touchStartTime = when the current touch began, dismissPending /
+     * dismissLightbox = the armed 180ms dismiss timer and the lightbox it
+     * belongs to, so the timer is guarded by this named state.
+     */
+    const gesture = {
+        phase: 'idle',
+        startX: 0,
+        startY: 0,
+        baseX: 0,
+        baseY: 0,
+        pinchDist: 1,
+        pinchScale: 1,
+        pinchMidX: 0,
+        pinchMidY: 0,
+        lastTapTime: 0,
+        lastTapX: 0,
+        lastTapY: 0,
+        touchStartTime: 0,
+        dismissPending: false,
+        dismissLightbox: null
+    };
+    // Single setter for the gesture state machine: every phase change and
+    // every measurement update goes through here. Pass null for phase to
+    // update measurements without changing the phase.
+    const setGesture = (phase, measurements = {}) => {
+        if (phase != null)
+            gesture.phase = phase;
+        Object.assign(gesture, measurements);
+    };
+    const isOneFinger = () => gesture.phase == 'undecided' || gesture.phase == 'pan' || gesture.phase == 'dismiss' || gesture.phase == 'swipe';
     const dist = t => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
     const mid = t => [(t[0].clientX + t[1].clientX) / 2, (t[0].clientY + t[1].clientY) / 2];
     s.addEventListener('touchstart', e => {
         const t = e.touches;
         if (t.length == 2) {
-            m = 2;
-            lock = '';
-            d0 = dist(t) || 1;
-            s0 = G.s;
-            bx = G.x;
-            by = G.y;
             const [cx, cy] = ctr();
             const [mx, my] = mid(t);
-            smx = mx - cx;
-            smy = my - cy;
+            setGesture('pinch', {
+                pinchDist: dist(t) || 1,
+                pinchScale: G.s,
+                baseX: G.x,
+                baseY: G.y,
+                pinchMidX: mx - cx,
+                pinchMidY: my - cy
+            });
             ap();
             return;
         }
         if (t.length == 1) {
-            m = 1;
-            lock = '';
-            sx = t[0].clientX;
-            sy = t[0].clientY;
-            bx = G.x;
-            by = G.y;
-            t0 = Date.now();
+            setGesture('undecided', {
+                startX: t[0].clientX,
+                startY: t[0].clientY,
+                baseX: G.x,
+                baseY: G.y,
+                touchStartTime: Date.now()
+            });
             ap();
         }
     }, { passive: true });
     s.addEventListener('touchmove', e => {
         const t = e.touches;
-        if (m == 2 && t.length == 2) {
-            const ns = Math.max(1, Math.min(5, s0 * dist(t) / d0));
+        if (gesture.phase == 'pinch' && t.length == 2) {
+            const ns = Math.max(1, Math.min(5, gesture.pinchScale * dist(t) / gesture.pinchDist));
             const [cx, cy] = ctr();
             const [mx, my] = mid(t);
-            const k = ns / s0;
+            const k = ns / gesture.pinchScale;
             G.s = ns;
-            G.x = (mx - cx) - (smx - bx) * k;
-            G.y = (my - cy) - (smy - by) * k;
+            G.x = (mx - cx) - (gesture.pinchMidX - gesture.baseX) * k;
+            G.y = (my - cy) - (gesture.pinchMidY - gesture.baseY) * k;
             clamp();
             ap();
             return;
         }
-        if (m == 1 && t.length == 1) {
-            const dx = t[0].clientX - sx;
-            const dy = t[0].clientY - sy;
+        if (isOneFinger() && t.length == 1) {
+            const dx = t[0].clientX - gesture.startX;
+            const dy = t[0].clientY - gesture.startY;
             if (G.s > 1) {
-                G.x = bx + dx;
-                G.y = by + dy;
+                if (gesture.phase != 'pan')
+                    setGesture('pan');
+                G.x = gesture.baseX + dx;
+                G.y = gesture.baseY + dy;
                 clamp();
                 ap();
                 return;
             }
-            if (!lock) {
+            if (gesture.phase == 'undecided') {
                 if (Math.hypot(dx, dy) < 8)
                     return;
-                lock = Math.abs(dy) > Math.abs(dx) ? 'v' : 'h';
-                if (lock == 'v')
+                if (Math.abs(dy) > Math.abs(dx)) {
+                    setGesture('dismiss');
                     s.style.overflow = 'visible';
+                }
+                else
+                    setGesture('swipe');
             }
-            if (lock == 'v') {
+            if (gesture.phase == 'dismiss') {
                 G.y = dy;
                 G.x = dx * .3;
                 bg(Math.max(0, 1 - Math.abs(dy) / 320));
@@ -133,66 +172,77 @@ export function attachLightboxGestures() {
     }, { passive: true });
     s.addEventListener('touchend', e => {
         const t = e.touches;
-        if (m == 2) {
+        if (gesture.phase == 'pinch') {
             if (G.s < 1.05) {
                 G.s = 1;
                 G.x = G.y = 0;
                 ap('transform .2s');
             }
             if (t.length == 1) {
-                m = 1;
-                sx = t[0].clientX;
-                sy = t[0].clientY;
-                bx = G.x;
-                by = G.y;
-                lock = '';
+                setGesture('undecided', {
+                    startX: t[0].clientX,
+                    startY: t[0].clientY,
+                    baseX: G.x,
+                    baseY: G.y
+                });
             }
             else
-                m = 0;
+                setGesture('idle');
             return;
         }
-        if (m == 1 && !t.length) {
-            m = 0;
+        if (isOneFinger() && !t.length) {
             const c = e.changedTouches[0];
-            const dx = c.clientX - sx;
-            const dy = c.clientY - sy;
-            const dt = Math.max(1, Date.now() - t0);
-            if (!lock && Math.hypot(dx, dy) < 10) {
+            const dx = c.clientX - gesture.startX;
+            const dy = c.clientY - gesture.startY;
+            const dt = Math.max(1, Date.now() - gesture.touchStartTime);
+            if ((gesture.phase == 'undecided' || gesture.phase == 'pan') && Math.hypot(dx, dy) < 10) {
                 const now = Date.now();
-                if (now - lt < 300 && Math.hypot(c.clientX - lx, c.clientY - ly) < 30) {
+                if (now - gesture.lastTapTime < 300 && Math.hypot(c.clientX - gesture.lastTapX, c.clientY - gesture.lastTapY) < 30) {
                     e.preventDefault();
-                    lt = 0;
+                    setGesture('idle', { lastTapTime: 0 });
                     zoomAt(c.clientX, c.clientY, G.s > 1 ? 1 : 2.5, 'transform .2s');
                 }
                 else {
-                    lt = now;
-                    lx = c.clientX;
-                    ly = c.clientY;
+                    setGesture('tap-pending', {
+                        lastTapTime: now,
+                        lastTapX: c.clientX,
+                        lastTapY: c.clientY
+                    });
                 }
                 return;
             }
-            if (lock == 'v') {
+            if (gesture.phase == 'dismiss') {
                 s.style.overflow = '';
                 if (Math.abs(dy) > 110 || (Math.abs(dy) / dt > .6 && Math.abs(dy) > 40)) {
                     G.y = (dy > 0 ? 1 : -1) * innerHeight;
                     ap('transform .2s');
                     bg(0);
+                    setGesture('dismiss', { dismissPending: true, dismissLightbox: L });
                     setTimeout(() => {
-                        if (state.lightbox === L)
+                        if (gesture.phase == 'dismiss' && gesture.dismissPending && gesture.dismissLightbox === L) {
+                            setGesture('idle', { dismissPending: false, dismissLightbox: null });
                             closeLightbox();
+                        }
+                        else if (gesture.dismissPending) {
+                            // Dismiss superseded by a new gesture on this lightbox:
+                            // disarm without disturbing the current phase.
+                            setGesture(null, { dismissPending: false, dismissLightbox: null });
+                        }
                     }, 180);
                 }
                 else {
+                    setGesture('idle');
                     G.x = G.y = 0;
                     bg(null);
                     ap('transform .2s');
                 }
                 return;
             }
-            if (lock == 'h') {
+            if (gesture.phase == 'swipe') {
                 if (Math.abs(dx) > 70 || (Math.abs(dx) / dt > .5 && Math.abs(dx) > 30)) {
                     const i = L.i + (dx < 0 ? 1 : -1);
                     if (i >= 0 && i < L.srcs.length) {
+                        setGesture('idle');
                         G.x = G.y = 0;
                         ap();
                         showLightboxImage(i);
@@ -202,10 +252,11 @@ export function attachLightboxGestures() {
                 G.x = 0;
                 ap('transform .2s');
             }
+            setGesture('idle');
         }
     }, { passive: false });
     s.addEventListener('touchcancel', () => {
-        m = 0;
+        setGesture('idle', { dismissPending: false, dismissLightbox: null });
         s.style.overflow = '';
         if (G.s <= 1) {
             G.x = G.y = 0;

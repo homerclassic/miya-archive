@@ -24,7 +24,7 @@ function handleHeaderTap(e) {
     }
     const na = e.target.closest('#nav>a.on[data-n]');
     if (na) {
-        const sec = decodeURIComponent(location.hash.slice(2)).split('/')[0];
+        const sec = state.route.section;
         const cur = sec == 't' || sec == 'tweet' || sec == 'at' ? null : navKey(sec);
         if (na.dataset.n == '' && sec == 'explore') {
             e.preventDefault();

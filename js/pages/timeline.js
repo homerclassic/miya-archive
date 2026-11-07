@@ -3,7 +3,7 @@
  */
 
 import { $, main } from '../core/dom.js';
-import { state } from '../core/state.js';
+import { state, toggleOldestFirst } from '../core/state.js';
 import { renderProfile } from './profile.js';
 import { pageHeader } from '../ui/page-header.js';
 import { skeletonTweets } from '../ui/skeleton.js';
@@ -12,6 +12,12 @@ import { tweetCard } from '../ui/tweet-card.js';
 /** Observers of the "load more" sentinels of the current timeline. */
 let timelineObservers = [];
 
+/** Disconnect and drop the sentinels of the timeline being replaced. */
+function clearTimelineObservers() {
+    timelineObservers.forEach(o => o.disconnect());
+    timelineObservers = [];
+}
+
 /**
  * Timeline around tweet `id`; scrolls up/down to load neighbours on demand.
  */
@@ -19,50 +25,54 @@ export function renderTimelineAt(id) {
     const i = state.indexById[id];
     if (i == null)
         return renderProfile();
-    let lo = Math.max(0, i - 15);
-    let hi = Math.min(state.tweets.length, i + 16);
-    timelineObservers.forEach(o => o.disconnect());
-    timelineObservers = [];
-    main.innerHTML = pageHeader('Timeline', '', 1) + `<div class="bar"><a id="od">${state.oldestFirst ? 'Oldest first ↑' : 'Newest first ↓'}</a></div><div class="more" id="up">${skeletonTweets(1)}</div><div id="l"></div><div class="more" id="dn">${skeletonTweets(1)}</div>`;
+    // The loaded window, as one named state object with a single setter — the
+    // "more above / more below" checks and the up/down handlers all read it.
+    const win = { lo: Math.max(0, i - 15), hi: Math.min(state.tweets.length, i + 16) };
+    const setWindow = (lo, hi) => { win.lo = lo; win.hi = hi; };
+    // The sort direction, read once per render: every branch below derives from
+    // this named value instead of re-testing state.oldestFirst inline.
+    const dir = state.oldestFirst ? 'oldest-first' : 'newest-first';
+    clearTimelineObservers();
+    main.innerHTML = pageHeader('Timeline', '', 1) + `<div class="bar"><a id="od">${dir == 'oldest-first' ? 'Oldest first ↑' : 'Newest first ↓'}</a></div><div class="more" id="up">${skeletonTweets(1)}</div><div id="l"></div><div class="more" id="dn">${skeletonTweets(1)}</div>`;
     const l = $('#l');
     const dr = (a, b) => {
         const r = state.tweets.slice(a, b).map(t => tweetCard(t, { h: t.id == id }));
-        if (!state.oldestFirst)
+        if (dir == 'newest-first')
             r.reverse();
         return r.join('');
     };
-    const tm = () => state.oldestFirst ? lo > 0 : hi < state.tweets.length;
-    const bm = () => state.oldestFirst ? hi < state.tweets.length : lo > 0;
+    const hasMoreAbove = () => dir == 'oldest-first' ? win.lo > 0 : win.hi < state.tweets.length;
+    const hasMoreBelow = () => dir == 'oldest-first' ? win.hi < state.tweets.length : win.lo > 0;
     const up = () => {
         const f = l.firstElementChild;
         const y = f ? f.getBoundingClientRect().top : 0;
-        if (state.oldestFirst) {
-            const a = Math.max(0, lo - 30);
-            l.insertAdjacentHTML('afterbegin', dr(a, lo));
-            lo = a;
+        if (dir == 'oldest-first') {
+            const a = Math.max(0, win.lo - 30);
+            l.insertAdjacentHTML('afterbegin', dr(a, win.lo));
+            setWindow(a, win.hi);
         }
         else {
-            const b = Math.min(state.tweets.length, hi + 30);
-            l.insertAdjacentHTML('afterbegin', dr(hi, b));
-            hi = b;
+            const b = Math.min(state.tweets.length, win.hi + 30);
+            l.insertAdjacentHTML('afterbegin', dr(win.hi, b));
+            setWindow(win.lo, b);
         }
-        if (!tm())
+        if (!hasMoreAbove())
             $('#up').remove();
         if (f)
             scrollBy(0, f.getBoundingClientRect().top - y);
     };
     const dn = () => {
-        if (state.oldestFirst) {
-            const b = Math.min(state.tweets.length, hi + 30);
-            l.insertAdjacentHTML('beforeend', dr(hi, b));
-            hi = b;
+        if (dir == 'oldest-first') {
+            const b = Math.min(state.tweets.length, win.hi + 30);
+            l.insertAdjacentHTML('beforeend', dr(win.hi, b));
+            setWindow(win.lo, b);
         }
         else {
-            const a = Math.max(0, lo - 30);
-            l.insertAdjacentHTML('beforeend', dr(a, lo));
-            lo = a;
+            const a = Math.max(0, win.lo - 30);
+            l.insertAdjacentHTML('beforeend', dr(a, win.lo));
+            setWindow(a, win.hi);
         }
-        if (!bm())
+        if (!hasMoreBelow())
             $('#dn').remove();
     };
     const watch = (el, fn) => {
@@ -78,13 +88,13 @@ export function renderTimelineAt(id) {
         o.observe(el);
         timelineObservers.push(o);
     };
-    l.innerHTML = dr(lo, hi);
-    if (!tm())
+    l.innerHTML = dr(win.lo, win.hi);
+    if (!hasMoreAbove())
         $('#up').remove();
-    if (!bm())
+    if (!hasMoreBelow())
         $('#dn').remove();
     $('#od').onclick = () => {
-        state.oldestFirst = !state.oldestFirst;
+        toggleOldestFirst();
         renderTimelineAt(id);
     };
     $('#t' + id).scrollIntoView({ block: 'center' });

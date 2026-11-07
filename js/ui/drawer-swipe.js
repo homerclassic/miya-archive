@@ -4,6 +4,7 @@
 
 import { $, isOverlayOpen } from '../core/dom.js';
 import { state } from '../core/state.js';
+import { isDrawerOpen, setDrawerOpen } from './drawer.js';
 
 /* ===== swipe from left edge opens menu, swipe left closes it ===== */
 /**
@@ -14,19 +15,29 @@ export function initDrawerSwipe() {
         const mq = matchMedia('(max-width:700px)');
         const D = () => $('#dr');
         const B = () => $('#drb');
-        let m = 0;
-        let drag = 0;
+        /**
+         * The drawer-gesture state. One named field replaces the old
+         * m (0=idle, 1=opening swipe, 2=closing swipe) crossed with
+         * drag (0=not yet recognised, 1=dragging):
+         *   'idle'           — no swipe in progress
+         *   'opening'        — swipe started from the left edge while closed, not yet recognised as a drag
+         *   'closing'        — swipe started while open, not yet recognised as a drag
+         *   'dragging-open'  — recognised horizontal drag opening the drawer
+         *   'dragging-closed' — recognised horizontal drag closing the drawer
+         */
+        let swipe = 'idle';
+        /** The drawer-gesture state's single setter. */
+        const setSwipe = next => { swipe = next; };
         let sx = 0;
         let sy = 0;
         let dx = 0;
         let t0 = 0;
         let W = 300;
         addEventListener('touchstart', e => {
-            m = 0;
-            drag = 0;
+            setSwipe('idle');
             if (!mq.matches || e.touches.length != 1 || !D())
                 return;
-            const open = document.body.classList.contains('dro');
+            const open = isDrawerOpen();
             // An overlay blocks the swipe. The drawer itself is the exception: when it is open the swipe is the
             // close gesture, so only the other overlays (lightbox, advanced search, share menu) block it then.
             if (!open && isOverlayOpen())
@@ -35,7 +46,7 @@ export function initDrawerSwipe() {
                 return;
             const t = e.touches[0];
             if (open || t.clientX <= 22) {
-                m = open ? 2 : 1;
+                setSwipe(open ? 'closing' : 'opening');
                 sx = t.clientX;
                 sy = t.clientY;
                 dx = 0;
@@ -44,36 +55,36 @@ export function initDrawerSwipe() {
             }
         }, { passive: true });
         addEventListener('touchmove', e => {
-            if (!m)
+            if (swipe == 'idle')
                 return;
             const t = e.touches[0];
             dx = t.clientX - sx;
             const dy = t.clientY - sy;
-            if (!drag) {
+            if (swipe == 'opening' || swipe == 'closing') {
                 if (Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2) {
-                    drag = 1;
+                    setSwipe(swipe == 'opening' ? 'dragging-open' : 'dragging-closed');
                     D().style.transition = B().style.transition = 'none';
                     D().style.visibility = 'visible';
                 }
                 else if (Math.abs(dy) > 10) {
-                    m = 0;
+                    setSwipe('idle');
                     return;
                 }
                 else
                     return;
             }
-            const x = m == 1 ? Math.min(0, Math.max(-W, -W + dx)) : Math.min(0, Math.max(-W, dx));
+            const x = swipe == 'dragging-open' ? Math.min(0, Math.max(-W, -W + dx)) : Math.min(0, Math.max(-W, dx));
             D().style.transform = `translateX(${x}px)`;
             B().style.opacity = 1 + x / W;
             B().style.pointerEvents = 'auto';
         }, { passive: true });
         addEventListener('touchend', () => {
-            if (!m || !drag) {
-                m = 0;
+            if (swipe != 'dragging-open' && swipe != 'dragging-closed') {
+                setSwipe('idle');
                 return;
             }
             const v = Math.abs(dx) / Math.max(1, Date.now() - t0);
-            const open = m == 1 ? (dx > W * .35 || (v > .4 && dx > 30)) : !(-dx > W * .25 || (v > .4 && dx < -30));
+            const open = swipe == 'dragging-open' ? (dx > W * .35 || (v > .4 && dx > 30)) : !(-dx > W * .25 || (v > .4 && dx < -30));
             for (const e of [D(), B()]) {
                 e.style.transition = '';
                 e.style.transform = '';
@@ -81,9 +92,8 @@ export function initDrawerSwipe() {
                 e.style.opacity = '';
                 e.style.pointerEvents = '';
             }
-            document.body.classList.toggle('dro', open);
-            m = 0;
-            drag = 0;
+            setDrawerOpen(open);
+            setSwipe('idle');
         }, { passive: true });
     }
 }

@@ -51,12 +51,13 @@ export function renderExplore(tab = 'foryou') {
  * Own tweets with at least one like and one retweet, shuffled once per page load.
  */
 function renderForYou(l) {
-    if (!state.forYouFeed) {
+    if (state.forYouFeedStatus == 'unbuilt') {
         state.forYouFeed = state.tweets.filter(t => !t.rt && t.l >= 1 && t.r >= 1);
         for (let i = state.forYouFeed.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [state.forYouFeed[i], state.forYouFeed[j]] = [state.forYouFeed[j], state.forYouFeed[i]];
         }
+        state.forYouFeedStatus = 'ready';
     }
     if (!state.forYouFeed.length) {
         l.innerHTML = '<div class="mu" style="padding:32px 16px;text-align:center">No tweets with both a like and a retweet.</div>';

@@ -59,9 +59,7 @@ function renderAdvancedModal() {
                 return closeAdvancedSearch();
             if (e.target.closest('[data-sub]')) {
                 const q = withDates(state.advDialog.draft, m.querySelector('#adv-since').value, m.querySelector('#adv-until').value);
-                state.advDialog.open = false;
-                state.advDialog.draft = '';
-                renderAdvancedModal();
+                closeAdvancedSearch();
                 isSearchRoute() ? setSearchQuery(q, { push: 1 }) : navigate('/search/' + encodeUri(q));
                 return;
             }

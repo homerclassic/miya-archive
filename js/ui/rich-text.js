@@ -30,7 +30,7 @@ export const linkify = x => escapeHtml(x).replace(/(https?:\/\/\S+)|(^|[^\w&])([
     return id && state.tweetsById[id] ? `<a href="#/t/${id}" title="Open this tweet in the archive">${txt}</a>` : `<a href="${u}" target="_blank" rel="noopener">${txt}</a>`;
 });
 
-export const highlightHtml = h => !state.highlightRegex ? h : h.split(/(<[^>]*>|&[a-z]+;)/).map(p => /^(<|&[a-z]+;$)/.test(p) ? p : p.replace(state.highlightRegex, '<mark>$&</mark>')).join('');
+export const highlightHtml = h => state.highlightStatus == 'none' ? h : h.split(/(<[^>]*>|&[a-z]+;)/).map(p => /^(<|&[a-z]+;$)/.test(p) ? p : p.replace(state.highlightRegex, '<mark>$&</mark>')).join('');
 
 /**
  * Escape tweet text and add links, mentions, hashtags, search highlights and quick-search words.
@@ -38,8 +38,10 @@ export const highlightHtml = h => !state.highlightRegex ? h : h.split(/(<[^>]*>|
 export const richText = x => wrapKeywords(highlightHtml(linkify(x)));
 
 const wrapKeywords = h => {
-    if (!state.keywordCounts)
+    if (state.keywordCountsStatus == 'unbuilt') {
         state.keywordCounts = buildKeywordIndex();
+        state.keywordCountsStatus = 'ready';
+    }
     let a = 0;
     return h.split(/(<[^>]*>|&[a-z]+;)/).map(p => {
         if (p[0] == '<') {

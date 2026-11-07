@@ -43,6 +43,12 @@ const FALLBACKS = {
   },
 };
 
+/** The per-image load state, written in exactly one place: 'loading' | 'loaded' | 'error'. Unset until the image resolves either way. */
+const setImgState = (img, s) => { img.dataset.imgState = s; };
+
+/** Fallback behaviour kind for a broken image: 'remove' | 'remove-parent' | 'placeholder' | 'embed-media' | 'grid-cell'. */
+const fallbackKind = img => img.dataset.fallback;
+
 /** Registers the capture-phase `error` and `load` listeners. */
 export function initImageEvents() {
   document.addEventListener(
@@ -50,7 +56,8 @@ export function initImageEvents() {
     (event) => {
       const img = event.target;
       if (!(img instanceof HTMLImageElement)) return;
-      const handler = FALLBACKS[img.dataset.fallback];
+      setImgState(img, 'error');
+      const handler = FALLBACKS[fallbackKind(img)];
       if (handler) handler(img);
     },
     true,
@@ -61,6 +68,7 @@ export function initImageEvents() {
     (event) => {
       const img = event.target;
       if (!(img instanceof HTMLImageElement)) return;
+      setImgState(img, 'loaded');
       const wrapper = img.closest(PLACEHOLDER_WRAPPERS);
       if (wrapper) wrapper.classList.add('loaded');
     },

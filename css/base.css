@@ -1,3 +1,7 @@
+html {
+  scrollbar-gutter: stable;
+}
+
 /* Design tokens (CSS variables), resets and element defaults. */
 
 html[data-t=light] {
@@ -189,6 +193,10 @@ nav>a,
 
   html.nvh .tabs2 {
     top: -140px;
+  }
+
+  html.nvh .sh {
+    top: 0;
   }
 
   html.pfs .hd0.pfh .mav {
