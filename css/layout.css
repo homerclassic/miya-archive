@@ -40,6 +40,37 @@ nav>a.on {
   font-weight: 700;
 }
 
+/* sliding highlight pill behind the active nav tab: it glides from one tab to the next
+   instead of the highlight jumping, in X's pill shape and hover colour. The router
+   positions it (moveNavHighlight in router.js); links sit above it via z-index. */
+.nav-hl {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 30px;
+  background: var(--hv);
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: transform .3s cubic-bezier(.2,.8,.2,1), width .3s cubic-bezier(.2,.8,.2,1), height .3s cubic-bezier(.2,.8,.2,1), opacity .2s;
+}
+
+.nav-hl.on {
+  opacity: 1;
+}
+
+/* mobile bottom bar: the pill is a rounded rect behind the active icon, inset from the cell edges */
+@media (max-width: 700px) {
+  .nav-hl {
+    border-radius: 16px;
+  }
+}
+
+nav>a {
+  position: relative;
+  z-index: 1;
+}
+
 /* nav icons: outline by default, filled only on the page you're on (the router toggles .on) */
 #nav a .ic-f,
 #dr a .ic-f {
@@ -257,16 +288,25 @@ aside {
   font-weight: 800;
 }
 
-.tabs2 a.on::after {
-  content: "";
+/* sliding blue indicator under the active tab, like X: a single bar that glides from
+   one tab to the next instead of jumping. The ::after is gone — the bar is a real
+   element (.tabs2-ind) positioned by moveTabsIndicator in js/ui/tabs-indicator.js,
+   so it can animate between tabs. Same 56px width, 4px height and blue as before. */
+.tabs2-ind {
   position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   bottom: 0;
+  left: 0;
   height: 4px;
   width: 56px;
   border-radius: 2px;
   background: var(--ac);
+  pointer-events: none;
+  opacity: 0;
+  transition: transform .3s cubic-bezier(.2,.8,.2,1), opacity .2s;
+}
+
+.tabs2-ind.on {
+  opacity: 1;
 }
 
 .bar {
@@ -466,7 +506,9 @@ nav .im,
 @media (prefers-reduced-motion: reduce) {
   nav,
   .hd0,
-  .tabs2 {
+  .tabs2,
+  .nav-hl,
+  .tabs2-ind {
     transition: none;
   }
 }
@@ -488,6 +530,16 @@ nav .im,
   }
 
   .hh+.tabs2 {
+    top: 0;
+  }
+
+  /* desktop: no 'Search' header bar above the search box either — same waste of space.
+     The search box is sticky under the 53px header, so with the header gone it sticks to the top instead. */
+  body[data-page="search"] .hd0 {
+    display: none;
+  }
+
+  body[data-page="search"] .sh {
     top: 0;
   }
 }

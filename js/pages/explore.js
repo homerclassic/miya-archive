@@ -35,7 +35,7 @@ export function renderExplore(tab = 'foryou') {
     const tabs = [['foryou', 'For you'], ['threads', 'Threads'], ['retweets', 'Most retweeted'], ['likes', 'Most liked']];
     if (!tabs.some(x => x[0] == tab))
         tab = 'foryou';
-    main.innerHTML = pageHeader('Home').replace('class="hd0"', 'class="hd0 hh"') + `<div class="tabs2">${tabs.map(([k, n]) => `<a data-go="${k == 'foryou' ? '/' : '/explore/' + k}" class="${k == tab ? 'on' : ''}">${n}</a>`).join('')}</div><div id="l"></div>`;
+    main.innerHTML = pageHeader('Home').replace('class="hd0"', 'class="hd0 hh"') + `<div class="tabs2">${tabs.map(([k, n]) => `<a data-go="${k == 'foryou' ? '/' : '/explore/' + k}" class="${k == tab ? 'on' : ''}">${n}</a>`).join('')}<div class="tabs2-ind"></div></div><div id="l"></div>`;
     const l = $('#l');
     if (tab == 'foryou')
         renderForYou(l);

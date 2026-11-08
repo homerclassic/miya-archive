@@ -346,6 +346,8 @@ details.card {
   top: 53px;
   z-index: 6;
   background: var(--bg);
+  /* divider between the search nav bar and the results below, like X's sticky search header */
+  border-bottom: 1px solid var(--bd);
 }
 
 .sbm {
@@ -362,7 +364,8 @@ details.card {
   top: 100%;
   left: 0;
   right: 0;
-  margin-top: 6px;
+  /* X keeps the pane almost touching the field — a hair of space, not a gap */
+  margin-top: 2px;
   background: var(--bg);
   border-radius: 16px;
   box-shadow: 0 0 16px rgba(0,0,0,.18), 0 4px 8px rgba(0,0,0,.08);

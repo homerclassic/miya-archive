@@ -8,7 +8,7 @@ import { $, escapeHtml } from '../core/dom.js';
 import { state } from '../core/state.js';
 import { ICON_CLOSE_PATH, ICON_SEARCH_PATH, filledIcon } from '../core/icons.js';
 import { buildKeywordIndex } from '../data/keywords.js';
-import { submitSearchBox } from './search-state.js';
+import { submitSearchBox, syncClearButton } from './search-state.js';
 
 const MAX_SHOWN = 7;
 const MAX_RECENT = 5;
@@ -221,7 +221,13 @@ function pickSuggestion(input, i) {
         return;
     hideSuggestions(input);
     input.value = e.query;
+    // the value was set programmatically, so sync the clear button or it goes stale
+    // (picking a recent from an empty box left the X hidden even though there is now text)
+    syncClearButton(input);
     submitSearchBox(e.query, '#' + input.id);
+    // X mobile dismisses the keyboard when you pick a suggestion; on desktop the focus stays so you can refine
+    if (matchMedia('(pointer:coarse)').matches)
+        input.blur();
 }
 
 /** Arrow keys move the highlight; Enter picks it (or submits the typed text); Escape closes. Returns true when the key was consumed. */
