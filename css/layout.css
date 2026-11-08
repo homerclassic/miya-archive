@@ -59,10 +59,10 @@ nav>a.on {
   opacity: 1;
 }
 
-/* mobile bottom bar: the pill is a rounded rect behind the active icon, inset from the cell edges */
+/* the highlight pill is desktop-only — the mobile bottom bar doesn't get one */
 @media (max-width: 700px) {
   .nav-hl {
-    border-radius: 16px;
+    display: none;
   }
 }
 
@@ -279,6 +279,28 @@ aside {
 }
 
 .tabs2 a:hover {
+  background: var(--hv);
+  text-decoration: none;
+}
+
+/* profile tabs match the home tab bar exactly: muted text, dark active text, gray
+   hover — never the blue accent for text or hover */
+.tabs2.ptabs a {
+  color: var(--mu);
+}
+
+.tabs2.ptabs a.on {
+  color: var(--tx);
+}
+
+.tabs2.ptabs a:hover {
+  color: var(--mu);
+  background: var(--hv);
+  text-decoration: none;
+}
+
+.tabs2.ptabs a.on:hover {
+  color: var(--tx);
   background: var(--hv);
   text-decoration: none;
 }

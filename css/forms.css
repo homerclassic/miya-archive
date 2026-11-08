@@ -367,8 +367,10 @@ details.card {
   /* X keeps the pane almost touching the field — a hair of space, not a gap */
   margin-top: 2px;
   background: var(--bg);
-  border-radius: 16px;
-  box-shadow: 0 0 16px rgba(0,0,0,.18), 0 4px 8px rgba(0,0,0,.08);
+  /* X's recent pane reads squarer than our 16px — 12px, with a shadow between
+     X's faint popup and our old heavy double shadow */
+  border-radius: 12px;
+  box-shadow: 0 0 16px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.08);
   overflow: hidden;
   z-index: 50;
   padding: 4px 0;
@@ -390,7 +392,8 @@ details.card {
 
 .sugg-hd span {
   font-size: 20px;
-  font-weight: 800;
+  /* X's "Recent" heading reads bold (700), not extrabold (800) */
+  font-weight: 700;
   color: var(--tx);
 }
 
@@ -398,10 +401,13 @@ details.card {
   color: var(--ac);
   font-size: 15px;
   cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 999px;
 }
 
 .sugg-clear:hover {
-  text-decoration: underline;
+  text-decoration: none;
+  background: #e8f5fd;
 }
 
 .sugg-it {
@@ -462,7 +468,8 @@ details.card {
 }
 
 .sugg-x:hover {
-  background: var(--hv);
+  /* X gives the remove X a light blue halo on hover, not the gray used elsewhere */
+  background: #e8f5fd;
 }
 
 .chips {

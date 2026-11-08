@@ -76,9 +76,14 @@
     color: var(--tx);
     font-size: 20px;
     line-height: 24px;
-    font-weight: 700;
     padding: 14px 16px;
     cursor: pointer;
+  }
+
+  /* only the page you're on is bold, like the desktop nav (nav>a.on) — the
+     base rule used to bold every drawer link */
+  #dr a.on {
+    font-weight: 700;
   }
 
   #dr a:hover {
