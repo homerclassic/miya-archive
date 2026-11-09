@@ -17,28 +17,6 @@ import { moveTabsIndicator } from './ui/tabs-indicator.js';
 export const navKey = a => a == 'search' || a == 'history' ? a : a == 'bookmarks' ? 'history' : a == 'tweets' || a == 'media' || a == 't' || a == 'tweet' || a == 'at' ? 'tweets' : '';
 
 /**
- * Slide the nav highlight pill behind the active tab. The pill is positioned from the
- * active link's box (relative to #nav, its offset parent) and glides there via the
- * CSS transition, so switching tabs animates instead of jumping. On mobile the pill
- * is inset from the cell edges so it reads as a highlight behind the icon.
- */
-function moveNavHighlight() {
-    const pill = document.querySelector('#nav .nav-hl');
-    const active = document.querySelector('#nav a[data-n].on');
-    if (!pill || !active)
-        return;
-    const inset = matchMedia('(max-width: 700px)').matches ? 6 : 0;
-    const x = active.offsetLeft + inset;
-    const y = active.offsetTop + inset;
-    const w = active.offsetWidth - inset * 2;
-    const h = active.offsetHeight - inset * 2;
-    pill.style.transform = `translate(${x}px, ${y}px)`;
-    pill.style.width = w + 'px';
-    pill.style.height = h + 'px';
-    pill.classList.add('on');
-}
-
-/**
  * Render the page for the current location.hash. `fresh` means a refresh rather than navigation.
  */
 export function handleRoute(fresh) {
@@ -54,7 +32,6 @@ export function handleRoute(fresh) {
     state.route = { section: a, rest: b };
     document.body.dataset.page = a;
     document.querySelectorAll('nav a[data-n], #dr a[data-n]').forEach(x => x.classList.toggle('on', x.dataset.n == navKey(a)));
-    moveNavHighlight();
     if (state.loadStatus !== 'ready')
         return;
     // Sync the sidebar box to the route's query (or clear it off the search page),
@@ -166,6 +143,6 @@ function finishRoute(k, a) {
 export function initRouter() {
     addEventListener('popstate', () => { navigatedByPopstate = true; });
     addEventListener('hashchange', () => handleRoute());
-    // the pill and the tab bar track their active element's box, so reposition both when the layout shifts
-    addEventListener('resize', () => { moveNavHighlight(); moveTabsIndicator(); });
+    // the tab bar tracks its active element's box, so reposition it when the layout shifts
+    addEventListener('resize', () => { moveTabsIndicator(); });
 }

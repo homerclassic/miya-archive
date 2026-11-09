@@ -40,37 +40,6 @@ nav>a.on {
   font-weight: 700;
 }
 
-/* sliding highlight pill behind the active nav tab: it glides from one tab to the next
-   instead of the highlight jumping, in X's pill shape and hover colour. The router
-   positions it (moveNavHighlight in router.js); links sit above it via z-index. */
-.nav-hl {
-  position: absolute;
-  left: 0;
-  top: 0;
-  border-radius: 30px;
-  background: var(--hv);
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0;
-  transition: transform .3s cubic-bezier(.2,.8,.2,1), width .3s cubic-bezier(.2,.8,.2,1), height .3s cubic-bezier(.2,.8,.2,1), opacity .2s;
-}
-
-.nav-hl.on {
-  opacity: 1;
-}
-
-/* the highlight pill is desktop-only — the mobile bottom bar doesn't get one */
-@media (max-width: 700px) {
-  .nav-hl {
-    display: none;
-  }
-}
-
-nav>a {
-  position: relative;
-  z-index: 1;
-}
-
 /* nav icons: outline by default, filled only on the page you're on (the router toggles .on) */
 #nav a .ic-f,
 #dr a .ic-f {
@@ -331,6 +300,68 @@ aside {
   opacity: 1;
 }
 
+/* Topics tab: a dropdown under the tab to pick a category. The menu is
+   position: fixed (set under the tab by JS on open) so it escapes the tab bar's
+   horizontal scroll; the items are data-go links, so the existing delegated
+   navigation handles them. The current category gets .cur, never .on, so the
+   sliding tab indicator (which reads a.on) is never confused by menu items. */
+.topics-chev {
+  font-size: 10px;
+  margin-left: 4px;
+  color: var(--mu);
+}
+
+#topics-tab.on .topics-chev {
+  color: var(--tx);
+}
+
+.topics-menu {
+  position: fixed;
+  z-index: 30;
+  width: 240px;
+  background: var(--bg);
+  border: 1px solid var(--bd);
+  border-radius: 12px;
+  box-shadow: 0 0 16px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.08);
+  padding: 4px 0;
+  max-height: min(70vh, 480px);
+  overflow-y: auto;
+}
+
+.tabs2 .topics-menu a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex: none;
+  padding: 10px 16px;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tx);
+  position: static;
+  white-space: nowrap;
+}
+
+.tabs2 .topics-menu a:hover {
+  background: var(--hv);
+  text-decoration: none;
+}
+
+.tabs2 .topics-menu a.cur {
+  background: var(--hv);
+}
+
+.tabs2 .topics-menu a.cur span:first-child {
+  font-weight: 800;
+}
+
+/* header above a topic's list: category name + true tweet count */
+.topics-head b {
+  font-weight: 800;
+  color: var(--tx);
+}
+
 .bar {
   display: flex;
   gap: 8px;
@@ -529,14 +560,12 @@ nav .im,
   nav,
   .hd0,
   .tabs2,
-  .nav-hl,
   .tabs2-ind {
     transition: none;
   }
 }
 
 @media (hover: none) {
-  nav>a:active,
   .tabs2 a:active,
   .bk:active,
   .row:active {

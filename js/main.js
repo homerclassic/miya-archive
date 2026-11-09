@@ -15,6 +15,7 @@ import { initXRender } from './embeds/x-render.js';
 import { startApp } from './app.js';
 import { initMobileBehaviors } from './ui/mobile-behaviors.js';
 import { initProfileViewer } from './ui/profile-viewer.js';
+import { initShortcuts } from './ui/shortcuts.js';
 
 initImageEvents();
 initPostActions();
@@ -30,3 +31,4 @@ initXRender();
 startApp();
 initMobileBehaviors();
 initProfileViewer();
+initShortcuts();

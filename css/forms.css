@@ -550,6 +550,61 @@ details.card {
   padding: 8px 16px 20px;
 }
 
+/* Keyboard shortcuts help popup (X-style): sections of label + key chips. */
+.help-sec {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--tx);
+  padding: 12px 0 4px;
+}
+
+.help-sec:first-child {
+  padding-top: 4px;
+}
+
+.help-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--bd);
+  font-size: 15px;
+  color: var(--tx);
+}
+
+.help-row:last-child {
+  border-bottom: 0;
+}
+
+.help-keys {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.kbd {
+  display: inline-block;
+  min-width: 22px;
+  padding: 3px 7px;
+  border: 1px solid var(--bd);
+  border-radius: 6px;
+  background: var(--bg);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  color: var(--tx);
+}
+
+.kbd-sep {
+  color: var(--mu);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 0 1px;
+}
+
 #sidecard a {
   font-size: 15px;
 }

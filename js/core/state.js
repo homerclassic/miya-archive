@@ -37,6 +37,10 @@ export const state = {
   bookmarkedIds: [],
   /** timeline sort direction (true = oldest first) */
   oldestFirst: true,
+  /** shortcuts help popup: open flag */
+  helpOpen: false,
+  /** id of the j/k-focused post (null = none) */
+  focusedPostId: null,
   /** advanced-search dialog: open flag plus the draft query being edited (null = closed) */
   advDialog: { open: false, draft: '' },
   /** recent searches */
@@ -45,6 +49,12 @@ export const state = {
   forYouFeed: null,
   /** "For you" feed state: 'unbuilt' = not built yet, 'ready' = forYouFeed is usable */
   forYouFeedStatus: 'unbuilt',
+  /** per-topic tweet lists (slug -> tweets, most-liked first) (null until built) */
+  categoryIndex: null,
+  /** per-topic tweet counts (slug -> true count, uncapped) (null until built) */
+  categoryCounts: null,
+  /** category-index state: 'unbuilt' = not built yet, 'ready' = categoryIndex is usable */
+  categoryIndexStatus: 'unbuilt',
   /** history key -> scroll position */
   scrollMemory: new Map(),
   /** monotonic key for history entries */

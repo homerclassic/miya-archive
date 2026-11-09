@@ -14,6 +14,12 @@
   background: var(--hv);
 }
 
+/* keyboard-focused post (j/k): the hover tint, plus a blue left bar */
+.tw.kb-focus {
+  background: var(--hv);
+  box-shadow: inset 2px 0 0 var(--ac);
+}
+
 .av {
   position: relative;
   width: 40px;

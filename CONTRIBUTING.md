@@ -28,16 +28,16 @@ js/
   app.js             fetch data/tweets.md, parse it, render
   router.js          #/route to page renderer, scroll restoration
   events.js          global click handling
-  core/              config, shared state, DOM helpers, icons, formatting, localStorage
+  core/              config, shared state, DOM helpers, icons, formatting, localStorage, author identity
   data/              archive parser, retweet linking, keyword index
-  search/            query language, search state, advanced-search dialog
+  search/            query language, search state, advanced-search dialog, search suggestions
   pages/             profile, timeline, thread, history, explore, search
-  ui/                tweet card, rich text, lightbox, share menu, drawer, shell, skeletons, image events, like/bookmark
+  ui/                tweet card, rich text, lightbox and gestures, share menu, drawer and swipe, shell, skeletons, image events, like/bookmark, keyboard shortcuts, tab indicator, lazy list, pull to refresh, mobile swipe, profile viewer, page header, avatar, header glass
   embeds/            quote and link cards, live X embeds
   export/            thread to PDF
 assets/              favicon
 data/                the archive: tweets.md, miya.png, header.png and the media files tweets.md refers to
-scripts/             dev server and build
+scripts/             dev server, build, standalone build, per-tweet static pages
 ```
 
 ## Code conventions

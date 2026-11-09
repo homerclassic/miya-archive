@@ -8,8 +8,8 @@ export const $ = s => document.querySelector(s);
 
 export const main = $('#main');
 
-/** True while any overlay is open: the image viewer, the drawer, the advanced-search dialog or the share menu. */
-export const isOverlayOpen = () => !!(state.lightbox || document.body.classList.contains('dro') || $('#adv') || $('#shm'));
+/** True while any overlay is open: the image viewer, the drawer, the advanced-search dialog, the share menu or the shortcuts help popup. */
+export const isOverlayOpen = () => !!(state.lightbox || document.body.classList.contains('dro') || $('#adv') || $('#shm') || $('#help'));
 
 export const escapeHtml = s => s.replace(/[&<>"]/g, c => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'
