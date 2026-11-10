@@ -1,15 +1,12 @@
 /**
- * Per-tweet actions: share menu (copy link / thread PDF / post image) and "draft on X".
+ * Per-tweet actions: share menu (copy link / thread PDF) and "draft on X".
  */
 
-import html2canvas from 'html2canvas';
 import { $, showToast } from '../core/dom.js';
 import { ICONS, ICON_LINK_PATH, filledIcon, icon } from '../core/icons.js';
 import { state } from '../core/state.js';
 import { collectThreadIds } from '../export/thread-document.js';
 import { downloadThreadPdf } from '../export/thread-export.js';
-import { hydrateEmbedsIn } from '../embeds/x-render.js';
-import { tweetCard } from './tweet-card.js';
 
 /**
  * Named share-menu state: the single source of truth for whether the menu
@@ -19,19 +16,6 @@ import { tweetCard } from './tweet-card.js';
  * only by setShareMenu().
  */
 const shareMenu = { open: false, tweetId: null, justOpenedUntil: 0 };
-
-// Rendered post images, ready to share. The share sheet needs a live tap
-// gesture, so a tap on Download as image must reach navigator.share with no
-// await before it; that only works if the file is already rendered. Renders
-// start when the share menu opens. While a render runs, the menu item is
-// disabled and reads "Preparing image…"; it enables itself when the file is
-// ready (or becomes a retry button if the render failed), so a tap never
-// silently does nothing. Finished files are kept (a few at a time) so
-// dismissing the share sheet and tapping again does not re-render.
-const readyImages = new Map(); // id -> File
-const pendingImages = new Map(); // id -> Promise<void>
-const failedImages = new Set(); // ids whose last render failed
-const MAX_READY_IMAGES = 6;
 
 /**
  * Single setter for the share menu. Opening creates the #shm element with
@@ -70,7 +54,7 @@ function setShareMenu(open, tweetId = null, btn = null) {
 export const closeShareMenu = () => setShareMenu(false);
 
 /**
- * Open the Copy link / Download thread / Download as image menu next to the share button.
+ * Open the Copy link / Download thread menu next to the share button.
  */
 export function openShareMenu(btn) {
     const id = btn.dataset.sh;
@@ -79,39 +63,18 @@ export function openShareMenu(btn) {
         return;
     }
     setShareMenu(true, id, btn);
-    // Start rendering the image in the background once the menu has opened,
-    // so the file is ready when the user taps Download as image. Deferred
-    // with setTimeout so building the image does not block the menu opening
-    // (that synchronous work is what made the share button feel delayed).
-    // Only render if the menu is still open for this tweet when it fires.
-    setTimeout(() => {
-        if (shareMenu.open && shareMenu.tweetId == id)
-            prerenderPostImage(id);
-    }, 0);
     const m = $('#shm');
-    m.innerHTML = `<button type="button" role="menuitem" data-a="link">${filledIcon(ICON_LINK_PATH, 18)}Copy link</button>${collectThreadIds(id).length > 1 ? `<button type="button" role="menuitem" data-a="pdf">${icon(ICONS.dl, 18)}Download thread as PDF</button>` : ''}<button type="button" role="menuitem" data-a="img">${icon(ICONS.dl, 18)}Download as image</button>`;
+    m.innerHTML = `<button type="button" role="menuitem" data-a="link">${filledIcon(ICON_LINK_PATH, 18)}Copy link</button>${collectThreadIds(id).length > 1 ? `<button type="button" role="menuitem" data-a="pdf">${icon(ICONS.dl, 18)}Download thread as PDF</button>` : ''}`;
     const r = btn.getBoundingClientRect();
     const w = m.offsetWidth;
     const h = m.offsetHeight;
     m.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px';
     m.style.top = (r.bottom + h + 8 > innerHeight ? r.top - h - 4 : r.bottom + 4) + 'px';
-    syncImageButton(id);
+
     m.onclick = e => {
         const b = e.target.closest('button');
         if (!b)
             return;
-        if (b.dataset.a == 'img') {
-            // Share first: navigator.share needs the live tap, so it must be
-            // invoked before any menu work (closing the menu, toasts, or any
-            // await would burn the gesture window). The item is disabled until
-            // the file is ready, so with no file this is the retry state after
-            // a failed render: re-render and keep the menu open.
-            const willShare = readyImages.has(id);
-            downloadPostImage(id);
-            if (willShare)
-                closeShareMenu();
-            return;
-        }
         closeShareMenu();
         if (b.dataset.a == 'pdf')
             downloadThreadPdf(id);
@@ -119,272 +82,6 @@ export function openShareMenu(btn) {
             copyLink(id);
     };
     m.querySelector('button').focus();
-}
-
-// The first solid background colour walking up from `el` (the card itself is
-// transparent, so this lands on the page background and follows the theme).
-function solidBackground(el) {
-    while (el) {
-        const c = getComputedStyle(el).backgroundColor;
-        if (c && c !== 'rgba(0, 0, 0, 0)' && c !== 'transparent')
-            return c;
-        el = el.parentElement;
-    }
-    return '#ffffff';
-}
-
-/**
- * Download the post as a PNG image, in the focused post-page layout (the
- * tweet/<id>.html view): name and handle, text, timestamp, then the
- * Retweets / Likes line — not the compact feed card. The focused card is
- * rendered into an off-screen 600px container (the centre-column width),
- * its action row dropped to match the post page, then screenshotted at 2x.
- * Works on the site, where the images are same-origin. In the standalone
- * (file://) the browser taints the canvas when it draws a local image, so
- * the save fails there and the user gets a toast instead of a file.
- */
-// html2canvas mishandles object-fit: cover + aspect-ratio / max-height on
-// quote media, stretching single photos. Rebuild the cover crop explicitly:
-// size each embed image to cover its box and clip the overflow, using only
-// absolute positioning and overflow:hidden, which html2canvas renders
-// faithfully. Runs after hydration + image load, before html2canvas.
-function fixEmbedImages(root) {
-    for (const box of root.querySelectorAll('.qx .qgi')) {
-        const im = box.querySelector('img');
-        if (!im || !im.naturalWidth || !im.naturalHeight)
-            continue;
-        const r = box.getBoundingClientRect();
-        if (!r.width || !r.height)
-            continue;
-        const s = Math.max(r.width / im.naturalWidth, r.height / im.naturalHeight);
-        const dw = im.naturalWidth * s, dh = im.naturalHeight * s;
-        box.style.height = r.height + 'px';
-        box.style.aspectRatio = 'auto';
-        box.style.overflow = 'hidden';
-        box.style.position = 'relative';
-        im.style.position = 'absolute';
-        im.style.left = ((r.width - dw) / 2) + 'px';
-        im.style.top = ((r.height - dh) / 2) + 'px';
-        im.style.width = dw + 'px';
-        im.style.height = dh + 'px';
-        im.style.maxHeight = 'none';
-        im.style.objectFit = 'none';
-    }
-}
-
-// Put the right state on the menu's Download as image item: ready, preparing
-// (disabled) or failed (retry). No-op if the menu is closed or open for a
-// different tweet.
-function syncImageButton(id) {
-    const m = $('#shm');
-    const b = m && m.dataset.id == id ? m.querySelector('[data-a="img"]') : null;
-    if (!b)
-        return;
-    const ready = readyImages.has(id);
-    const failed = !ready && failedImages.has(id);
-    const busy = !ready && !failed;
-    b.disabled = busy;
-    b.setAttribute('aria-busy', String(busy));
-    b.style.opacity = busy ? '.55' : '';
-    const t = b.lastChild;
-    if (t && t.nodeType == 3)
-        t.nodeValue = ready ? 'Download as image' : failed ? 'Retry image' : 'Preparing image…';
-}
-
-// Keep the last few rendered files so a cancelled share can be repeated
-// instantly.
-function rememberImage(id, file) {
-    readyImages.delete(id);
-    readyImages.set(id, file);
-    if (readyImages.size > MAX_READY_IMAGES)
-        readyImages.delete(readyImages.keys().next().value);
-}
-
-// Start rendering a post to a PNG in the background, if it is not already
-// rendered or rendering. The finished File lands in readyImages; a failure
-// lands in failedImages. Either way the menu item is updated.
-function prerenderPostImage(id) {
-    if (readyImages.has(id) || pendingImages.has(id))
-        return;
-    failedImages.delete(id);
-    syncImageButton(id);
-    const p = renderPostImageFile(id)
-        .catch(() => null)
-        .then(f => {
-            if (f) {
-                rememberImage(id, f);
-            } else {
-                failedImages.add(id);
-                if (shareMenu.open && shareMenu.tweetId == id)
-                    showToast('Couldn’t render that image');
-            }
-        })
-        .finally(() => {
-            pendingImages.delete(id);
-            syncImageButton(id);
-        });
-    pendingImages.set(id, p);
-}
-
-// Render a post to a PNG File (focused layout, no action row / counts /
-// timestamp, 24px of bottom padding on the card itself). Returns null on any
-// failure; the caller shows the toast. The off-screen wrap is always removed.
-async function renderPostImageFile(id) {
-    const P = state.tweetsById[id];
-    if (!P)
-        return null;
-    // Eager images: the container sits off-screen, so lazy ones would never load.
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'position:fixed;left:-10000px;top:0;width:600px;';
-    wrap.dataset.shot = id; // lets onclone find this card in html2canvas's cloned document
-    wrap.innerHTML = tweetCard(P, { f: true }).replaceAll('loading="lazy"', 'loading="eager"');
-    // Match the new tweet/<id>.html format: date next to the handle in the
-    // header, no timestamp line. Move the date out of .ts, then drop .ts.
-    const tsEl = wrap.querySelector('.ts');
-    const fhMu = wrap.querySelector('.fh .mu');
-    if (tsEl && fhMu) {
-        const date = tsEl.textContent.split('·')[1]?.trim();
-        if (date)
-            fhMu.append(document.createTextNode(' · ' + date));
-    }
-    wrap.querySelector('.ac')?.remove();
-    wrap.querySelector('.st')?.remove();
-    wrap.querySelector('.ts')?.remove();
-    // Bottom padding: the card has padding-bottom 0, and the timestamp /
-    // counts / action rows are stripped from the shot, so the text is the
-    // last element. Padding on the wrapper alone did not read as a margin,
-    // so pad the card itself, generously.
-    const art = wrap.querySelector('.tw');
-    if (art)
-        art.style.paddingBottom = '24px';
-    // Over file://, local tweet photos would taint the canvas and fail the
-    // save, so drop them from the render (the avatar is a data: URL in the
-    // standalone build, and quote images are https, so those stay). On the
-    // site the photos stay in the shot.
-    if (location.protocol === 'file:')
-        wrap.querySelector('.md')?.remove();
-    document.body.append(wrap);
-    const card = wrap.firstElementChild;
-    try {
-        // Hydrate quote embeds: the off-screen card never scrolls into view,
-        // so the lazy IntersectionObserver never fires and quotes would stay
-        // on "Loading post…". Give X up to 5s, then render whatever state
-        // the embed reached rather than hanging.
-        await Promise.race([
-            Promise.resolve().then(() => hydrateEmbedsIn(wrap)).catch(() => {}),
-            new Promise(r => setTimeout(r, 2000)),
-        ]);
-        // Wait for the avatar / media to finish loading so they are not
-        // blank. The embed renders its own lazy images, so force those
-        // eager here (the card's own were made eager in the HTML string).
-        await Promise.all([...wrap.querySelectorAll('img')].map(im => {
-            if (im.complete)
-                return 0;
-            if (im.loading === 'lazy') {
-                im.loading = 'eager';
-                im.src = im.src;
-            }
-            return new Promise(r => {
-                im.onload = im.onerror = r;
-                setTimeout(r, 2000);
-            });
-        }));
-        fixEmbedImages(wrap);
-        // iOS Safari caps canvas area at about 16.7M pixels; a very tall post
-        // at scale 2 could exceed it and come back blank, so clamp the scale.
-        const cw = card.offsetWidth || 600;
-        const ch = card.offsetHeight || 600;
-        const scale = Math.min(2, Math.sqrt(16000000 / (cw * ch)));
-        const canvas = await html2canvas(card, {
-            backgroundColor: solidBackground(card),
-            scale,
-            useCORS: true,
-            // html2canvas clones the whole page into a hidden iframe and lays
-            // it out, which on a long feed is most of the render time. Keep
-            // only this card in the clone.
-            onclone: doc => {
-                const keep = doc.querySelector(`[data-shot="${id}"]`);
-                if (!keep)
-                    return;
-                for (const n of [...doc.body.children])
-                    if (n !== keep)
-                        n.remove();
-            },
-        });
-        const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-        if (!blob) {
-            console.warn('post image: toBlob returned null', id, canvas.width, canvas.height);
-            return null;
-        }
-        return new File([blob], `miya-${id}.png`, { type: 'image/png' });
-    } catch (e) {
-        console.warn('post image render failed', id, e);
-        return null;
-    } finally {
-        wrap.remove();
-    }
-}
-
-async function downloadPostImage(id) {
-    // The file must already be rendered: navigator.share needs a live tap
-    // gesture, and any await before it can outlast the gesture on iOS. The
-    // menu item is disabled until the file exists, so the only time there is
-    // no file here is the retry state after a failed render. There is no
-    // await above the navigator.share call in the ready path.
-    const file = readyImages.get(id);
-    if (!file) {
-        prerenderPostImage(id);
-        return;
-    }
-    const touch = matchMedia('(pointer:coarse)').matches;
-    if (touch && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-            await navigator.share({ files: [file] });
-            return;
-        } catch (e) {
-            if (e && e.name === 'AbortError')
-                return; // user dismissed the sheet; do not fall through to a download
-            console.warn('navigator.share failed', e);
-        }
-    }
-    // On touch devices iOS ignores a programmatic anchor click after async
-    // work, so a download link would do nothing. Show the image instead and
-    // let the user press and hold to save it.
-    if (touch) {
-        showSaveSheet(file);
-        return;
-    }
-    const url = URL.createObjectURL(file);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = file.name;
-    document.body.append(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-}
-
-// Touch fallback when the share sheet is unavailable or fails: the rendered
-// image full screen, saved with a long press (Save to Photos).
-function showSaveSheet(file) {
-    const url = URL.createObjectURL(file);
-    const o = document.createElement('div');
-    o.style.cssText = 'position:fixed;top:0;right:0;bottom:0;left:0;z-index:99999;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;overflow:auto;';
-    const cap = document.createElement('div');
-    cap.textContent = 'Press and hold the image, then tap Save to Photos. Tap outside the image to close.';
-    cap.style.cssText = 'color:#fff;font:14px/1.4 system-ui,sans-serif;text-align:center;max-width:320px;';
-    const im = document.createElement('img');
-    im.src = url;
-    im.alt = '';
-    im.style.cssText = 'max-width:100%;max-height:72vh;object-fit:contain;border-radius:8px;-webkit-touch-callout:default;';
-    o.append(cap, im);
-    o.onclick = e => {
-        if (e.target === im)
-            return;
-        o.remove();
-        URL.revokeObjectURL(url);
-    };
-    document.body.append(o);
 }
 
 function copyLink(id) {

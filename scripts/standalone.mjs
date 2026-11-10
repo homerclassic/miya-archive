@@ -47,19 +47,6 @@ if (quoted.length !== 1) {
 }
 bundle = bundle.replace(/(['"])data\/tweets\.md\1/, JSON.stringify(dataUrl));
 
-// 2b. Embed the avatar as a data: URL too. The screenshot feature draws the
-//     post to a canvas, and a file:// image taints it, so toBlob throws and
-//     every screenshot fails in the standalone. A data: URL image does not
-//     taint. 32 KB, negligible next to the embedded archive. (Tweet media
-//     stays as files; the screenshot drops it over file:// instead.)
-const av = fs.readFileSync('data/miya.png');
-const avUrl = 'data:image/png;base64,' + av.toString('base64');
-const avQuoted = bundle.match(/(['"])data\/miya\.png\1/g) || [];
-if (avQuoted.length === 0) {
-  throw new Error(`Expected at least 1 quoted 'data/miya.png' in bundle, found 0`);
-}
-bundle = bundle.replace(/(['"])data\/miya\.png\1/g, JSON.stringify(avUrl));
-
 // 3. Inline the bundle. A literal </script inside it would close the tag
 //    early, so it is escaped with a backslash. The HTML parser only
 //    terminates on the exact </script sequence, and a backslash-slash inside
