@@ -72,6 +72,16 @@ export function openShareMenu(btn) {
         return;
     }
     setShareMenu(true, id, btn);
+    // Start rendering the image in the background once the menu has opened,
+    // so the file is ready when the user taps Download as image. The share
+    // sheet needs a live tap gesture, and the render can outlast it. Deferred
+    // with setTimeout so building the image does not block the menu opening
+    // (that synchronous work is what made the share button feel delayed).
+    // Only render if the menu is still open for this tweet when it fires.
+    setTimeout(() => {
+        if (shareMenu.open && shareMenu.tweetId == id)
+            preparedImage = { id, promise: renderPostImageFile(id) };
+    }, 0);
     const m = $('#shm');
     m.innerHTML = `<button type="button" role="menuitem" data-a="link">${filledIcon(ICON_LINK_PATH, 18)}Copy link</button>${collectThreadIds(id).length > 1 ? `<button type="button" role="menuitem" data-a="pdf">${icon(ICONS.dl, 18)}Download thread as PDF</button>` : ''}<button type="button" role="menuitem" data-a="img">${icon(ICONS.dl, 18)}Download as image</button>`;
     const r = btn.getBoundingClientRect();
@@ -92,9 +102,6 @@ export function openShareMenu(btn) {
             copyLink(id);
     };
     m.querySelector('button').focus();
-    // Start rendering the image now, while the menu is open, so the file is
-    // ready when the user taps Download as image.
-    preparedImage = { id, promise: renderPostImageFile(id) };
 }
 
 // The first solid background colour walking up from `el` (the card itself is
@@ -193,7 +200,7 @@ async function renderPostImageFile(id) {
         // the embed reached rather than hanging.
         await Promise.race([
             hydrateEmbedsIn(wrap),
-            new Promise(r => setTimeout(r, 5000)),
+            new Promise(r => setTimeout(r, 2000)),
         ]);
         // Wait for the avatar / media to finish loading so they are not
         // blank. The embed renders its own lazy images, so force those
@@ -207,7 +214,7 @@ async function renderPostImageFile(id) {
             }
             return new Promise(r => {
                 im.onload = im.onerror = r;
-                setTimeout(r, 3000);
+                setTimeout(r, 2000);
             });
         }));
         fixEmbedImages(wrap);
