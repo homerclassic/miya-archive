@@ -12,18 +12,29 @@ export const WORD_REGEX = /[\p{L}\p{N}_]+(?:['’][\p{L}\p{N}_]+)*/gu;
 // abbreviations people search for (AI, IQ, DM, ...), not function words.
 const SHORT_WORDS = new Set('ai dm ex gf iq op pc tl tv vs'.split(' '));
 
+/**
+ * Keywords of one tweet: the distinct indexed words in its lower-cased text
+ * (URLs and @/# tokens stripped, stop words / short words / numbers dropped).
+ * Shared by the keyword index and the topic categories, so both agree on what
+ * counts as a keyword.
+ */
+export function tweetKeywords(t) {
+    const seen = new Set();
+    for (const w of t.lc.replace(/https?:\/\/\S+/g, ' ').replace(/[@#]\w+/g, ' ').match(WORD_REGEX) || []) {
+        if ((w.length < 3 && !SHORT_WORDS.has(w)) || STOP_WORDS.has(w) || /^\d+$/.test(w) || seen.has(w))
+            continue;
+        seen.add(w);
+    }
+    return seen;
+}
+
 export function buildKeywordIndex() {
     const m = new Map();
     for (const t of state.tweets) {
         if (t.so && t.o)
             continue;
-        const seen = new Set();
-        for (const w of t.lc.replace(/https?:\/\/\S+/g, ' ').replace(/[@#]\w+/g, ' ').match(WORD_REGEX) || []) {
-            if ((w.length < 3 && !SHORT_WORDS.has(w)) || STOP_WORDS.has(w) || /^\d+$/.test(w) || seen.has(w))
-                continue;
-            seen.add(w);
+        for (const w of tweetKeywords(t))
             m.set(w, (m.get(w) || 0) + 1);
-        }
     }
     return m;
 }

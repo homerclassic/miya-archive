@@ -373,6 +373,17 @@ aside {
   font-size: 14px;
 }
 
+/* "Discover more" — related posts under a focused tweet, like X: a bold
+   section heading, then the related posts as ordinary tweet cards. The
+   border above comes from the reply card or the View in timeline bar. */
+.dm h2 {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 24px;
+  padding: 12px 16px;
+  margin: 0;
+}
+
 .hd0>div {
   min-width: 0;
 }

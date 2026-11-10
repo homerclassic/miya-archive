@@ -32,7 +32,7 @@ js/
   data/              archive parser, retweet linking, keyword index
   search/            query language, search state, advanced-search dialog, search suggestions
   pages/             profile, timeline, thread, history, explore, search
-  ui/                tweet card, rich text, lightbox and gestures, share menu, drawer and swipe, shell, skeletons, image events, like/bookmark, keyboard shortcuts, tab indicator, lazy list, pull to refresh, mobile swipe, profile viewer, page header, avatar, header glass
+  ui/                tweet card, rich text, lightbox and gestures, share menu, drawer and swipe, shell, skeletons, image events, like/bookmark, keyboard shortcuts, tab indicator, lazy list, pull to refresh, mobile swipe, profile viewer, page header, avatar, header glass, related posts
   embeds/            quote and link cards, live X embeds
   export/            thread to PDF
 assets/              favicon
