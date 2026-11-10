@@ -17,6 +17,7 @@ The tweet archive of [Miya Black Hearted Cyber Angel Baby](https://wiki.remilia.
 * Quick search — click any word in a tweet to search for it
 * Like and bookmark tweets to find them again later
 * Download any thread as a PDF
+* Download any post as an image
 
 ## Run from source
 

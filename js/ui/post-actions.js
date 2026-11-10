@@ -205,19 +205,34 @@ async function downloadPostImage(id) {
             scale: 2,
             useCORS: true,
         });
-        canvas.toBlob(blob => {
-            if (!blob) {
-                showToast('Couldn’t save this image');
+        const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+        if (!blob) {
+            showToast('Couldn’t save this image');
+            return;
+        }
+        const file = new File([blob], `miya-${id}.png`, { type: 'image/png' });
+        // On touch devices the anchor download never prompts a save: iOS Safari
+        // ignores a programmatic click after async work, so nothing happens.
+        // Use the native share sheet instead when the browser can share files;
+        // that gives Save to Photos / Save to Files.
+        if (matchMedia('(pointer:coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({ files: [file] });
                 return;
+            } catch (e) {
+                if (e && e.name === 'AbortError')
+                    return; // user dismissed the sheet; do not fall through to a download
+                // Any other error (e.g. the gesture expired during the render)
+                // falls through to the anchor download below.
             }
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `miya-${id}.png`;
-            document.body.append(a);
-            a.click();
-            a.remove();
-            setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-        }, 'image/png');
+        }
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `miya-${id}.png`;
+        document.body.append(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     }
     catch (e) {
         showToast('Couldn’t save this image');
