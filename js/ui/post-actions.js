@@ -23,10 +23,15 @@ const shareMenu = { open: false, tweetId: null, justOpenedUntil: 0 };
 // Rendered post images, ready to share. The share sheet needs a live tap
 // gesture, so a tap on Download as image must reach navigator.share with no
 // await before it; that only works if the file is already rendered. Renders
-// start when the share menu opens, and a tap before the file is ready only
-// asks the user to tap again once it is.
+// start when the share menu opens. While a render runs, the menu item is
+// disabled and reads "Preparing image…"; it enables itself when the file is
+// ready (or becomes a retry button if the render failed), so a tap never
+// silently does nothing. Finished files are kept (a few at a time) so
+// dismissing the share sheet and tapping again does not re-render.
 const readyImages = new Map(); // id -> File
-const pendingImages = new Map(); // id -> Promise<File|null>
+const pendingImages = new Map(); // id -> Promise<void>
+const failedImages = new Set(); // ids whose last render failed
+const MAX_READY_IMAGES = 6;
 
 /**
  * Single setter for the share menu. Opening creates the #shm element with
@@ -90,6 +95,7 @@ export function openShareMenu(btn) {
     const h = m.offsetHeight;
     m.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px';
     m.style.top = (r.bottom + h + 8 > innerHeight ? r.top - h - 4 : r.bottom + 4) + 'px';
+    syncImageButton(id);
     m.onclick = e => {
         const b = e.target.closest('button');
         if (!b)
@@ -97,9 +103,9 @@ export function openShareMenu(btn) {
         if (b.dataset.a == 'img') {
             // Share first: navigator.share needs the live tap, so it must be
             // invoked before any menu work (closing the menu, toasts, or any
-            // await would burn the gesture window). If the file is not ready
-            // yet, keep the menu open so the user can tap Download again
-            // once it is, instead of closing it and making them reopen it.
+            // await would burn the gesture window). The item is disabled until
+            // the file is ready, so with no file this is the retry state after
+            // a failed render: re-render and keep the menu open.
             const willShare = readyImages.has(id);
             downloadPostImage(id);
             if (willShare)
@@ -166,18 +172,57 @@ function fixEmbedImages(root) {
     }
 }
 
+// Put the right state on the menu's Download as image item: ready, preparing
+// (disabled) or failed (retry). No-op if the menu is closed or open for a
+// different tweet.
+function syncImageButton(id) {
+    const m = $('#shm');
+    const b = m && m.dataset.id == id ? m.querySelector('[data-a="img"]') : null;
+    if (!b)
+        return;
+    const ready = readyImages.has(id);
+    const failed = !ready && failedImages.has(id);
+    const busy = !ready && !failed;
+    b.disabled = busy;
+    b.setAttribute('aria-busy', String(busy));
+    b.style.opacity = busy ? '.55' : '';
+    const t = b.lastChild;
+    if (t && t.nodeType == 3)
+        t.nodeValue = ready ? 'Download as image' : failed ? 'Retry image' : 'Preparing image…';
+}
+
+// Keep the last few rendered files so a cancelled share can be repeated
+// instantly.
+function rememberImage(id, file) {
+    readyImages.delete(id);
+    readyImages.set(id, file);
+    if (readyImages.size > MAX_READY_IMAGES)
+        readyImages.delete(readyImages.keys().next().value);
+}
+
 // Start rendering a post to a PNG in the background, if it is not already
-// rendered or rendering. The finished File lands in readyImages.
+// rendered or rendering. The finished File lands in readyImages; a failure
+// lands in failedImages. Either way the menu item is updated.
 function prerenderPostImage(id) {
     if (readyImages.has(id) || pendingImages.has(id))
         return;
+    failedImages.delete(id);
+    syncImageButton(id);
     const p = renderPostImageFile(id)
+        .catch(() => null)
         .then(f => {
-            if (f)
-                readyImages.set(id, f);
+            if (f) {
+                rememberImage(id, f);
+            } else {
+                failedImages.add(id);
+                if (shareMenu.open && shareMenu.tweetId == id)
+                    showToast('Couldn’t render that image');
+            }
         })
-        .catch(() => {})
-        .finally(() => pendingImages.delete(id));
+        .finally(() => {
+            pendingImages.delete(id);
+            syncImageButton(id);
+        });
     pendingImages.set(id, p);
 }
 
@@ -191,6 +236,7 @@ async function renderPostImageFile(id) {
     // Eager images: the container sits off-screen, so lazy ones would never load.
     const wrap = document.createElement('div');
     wrap.style.cssText = 'position:fixed;left:-10000px;top:0;width:600px;';
+    wrap.dataset.shot = id; // lets onclone find this card in html2canvas's cloned document
     wrap.innerHTML = tweetCard(P, { f: true }).replaceAll('loading="lazy"', 'loading="eager"');
     // Match the new tweet/<id>.html format: date next to the handle in the
     // header, no timestamp line. Move the date out of .ts, then drop .ts.
@@ -225,7 +271,7 @@ async function renderPostImageFile(id) {
         // on "Loading post…". Give X up to 5s, then render whatever state
         // the embed reached rather than hanging.
         await Promise.race([
-            hydrateEmbedsIn(wrap),
+            Promise.resolve().then(() => hydrateEmbedsIn(wrap)).catch(() => {}),
             new Promise(r => setTimeout(r, 2000)),
         ]);
         // Wait for the avatar / media to finish loading so they are not
@@ -253,12 +299,26 @@ async function renderPostImageFile(id) {
             backgroundColor: solidBackground(card),
             scale,
             useCORS: true,
+            // html2canvas clones the whole page into a hidden iframe and lays
+            // it out, which on a long feed is most of the render time. Keep
+            // only this card in the clone.
+            onclone: doc => {
+                const keep = doc.querySelector(`[data-shot="${id}"]`);
+                if (!keep)
+                    return;
+                for (const n of [...doc.body.children])
+                    if (n !== keep)
+                        n.remove();
+            },
         });
         const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-        if (!blob)
+        if (!blob) {
+            console.warn('post image: toBlob returned null', id, canvas.width, canvas.height);
             return null;
+        }
         return new File([blob], `miya-${id}.png`, { type: 'image/png' });
     } catch (e) {
+        console.warn('post image render failed', id, e);
         return null;
     } finally {
         wrap.remove();
@@ -267,29 +327,32 @@ async function renderPostImageFile(id) {
 
 async function downloadPostImage(id) {
     // The file must already be rendered: navigator.share needs a live tap
-    // gesture, and any await before it can outlast the gesture on iOS, so a
-    // tap before the render finishes only asks the user to tap again. There
-    // is no await above the navigator.share call in the ready path.
+    // gesture, and any await before it can outlast the gesture on iOS. The
+    // menu item is disabled until the file exists, so the only time there is
+    // no file here is the retry state after a failed render. There is no
+    // await above the navigator.share call in the ready path.
     const file = readyImages.get(id);
     if (!file) {
         prerenderPostImage(id);
-        showToast('Preparing image… tap again in a moment');
         return;
     }
-    readyImages.delete(id);
-    // On touch devices the anchor download never prompts a save: iOS Safari
-    // ignores a programmatic click after async work, so nothing happens.
-    // Use the native share sheet instead when the browser can share files;
-    // that gives Save to Photos / Save to Files.
-    if (matchMedia('(pointer:coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) {
+    const touch = matchMedia('(pointer:coarse)').matches;
+    if (touch && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
             await navigator.share({ files: [file] });
             return;
         } catch (e) {
             if (e && e.name === 'AbortError')
                 return; // user dismissed the sheet; do not fall through to a download
-            // Any other error falls through to the anchor download below.
+            console.warn('navigator.share failed', e);
         }
+    }
+    // On touch devices iOS ignores a programmatic anchor click after async
+    // work, so a download link would do nothing. Show the image instead and
+    // let the user press and hold to save it.
+    if (touch) {
+        showSaveSheet(file);
+        return;
     }
     const url = URL.createObjectURL(file);
     const a = document.createElement('a');
@@ -299,6 +362,29 @@ async function downloadPostImage(id) {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
+}
+
+// Touch fallback when the share sheet is unavailable or fails: the rendered
+// image full screen, saved with a long press (Save to Photos).
+function showSaveSheet(file) {
+    const url = URL.createObjectURL(file);
+    const o = document.createElement('div');
+    o.style.cssText = 'position:fixed;top:0;right:0;bottom:0;left:0;z-index:99999;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;overflow:auto;';
+    const cap = document.createElement('div');
+    cap.textContent = 'Press and hold the image, then tap Save to Photos. Tap outside the image to close.';
+    cap.style.cssText = 'color:#fff;font:14px/1.4 system-ui,sans-serif;text-align:center;max-width:320px;';
+    const im = document.createElement('img');
+    im.src = url;
+    im.alt = '';
+    im.style.cssText = 'max-width:100%;max-height:72vh;object-fit:contain;border-radius:8px;-webkit-touch-callout:default;';
+    o.append(cap, im);
+    o.onclick = e => {
+        if (e.target === im)
+            return;
+        o.remove();
+        URL.revokeObjectURL(url);
+    };
+    document.body.append(o);
 }
 
 function copyLink(id) {
