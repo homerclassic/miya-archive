@@ -20,11 +20,13 @@ import { tweetCard } from './tweet-card.js';
  */
 const shareMenu = { open: false, tweetId: null, justOpenedUntil: 0 };
 
-// Image prepared while the share menu is open. Rendering a post to a PNG
-// takes seconds (quote hydration, image loads, html2canvas), longer than the
-// tap gesture navigator.share needs, so the render starts when the menu opens
-// and Download as image only has to share the finished file.
-let preparedImage = null; // { id, promise: Promise<File|null> }
+// Rendered post images, ready to share. The share sheet needs a live tap
+// gesture, so a tap on Download as image must reach navigator.share with no
+// await before it; that only works if the file is already rendered. Renders
+// start when the share menu opens, and a tap before the file is ready only
+// asks the user to tap again once it is.
+const readyImages = new Map(); // id -> File
+const pendingImages = new Map(); // id -> Promise<File|null>
 
 /**
  * Single setter for the share menu. Opening creates the #shm element with
@@ -73,14 +75,13 @@ export function openShareMenu(btn) {
     }
     setShareMenu(true, id, btn);
     // Start rendering the image in the background once the menu has opened,
-    // so the file is ready when the user taps Download as image. The share
-    // sheet needs a live tap gesture, and the render can outlast it. Deferred
+    // so the file is ready when the user taps Download as image. Deferred
     // with setTimeout so building the image does not block the menu opening
     // (that synchronous work is what made the share button feel delayed).
     // Only render if the menu is still open for this tweet when it fires.
     setTimeout(() => {
         if (shareMenu.open && shareMenu.tweetId == id)
-            preparedImage = { id, promise: renderPostImageFile(id) };
+            prerenderPostImage(id);
     }, 0);
     const m = $('#shm');
     m.innerHTML = `<button type="button" role="menuitem" data-a="link">${filledIcon(ICON_LINK_PATH, 18)}Copy link</button>${collectThreadIds(id).length > 1 ? `<button type="button" role="menuitem" data-a="pdf">${icon(ICONS.dl, 18)}Download thread as PDF</button>` : ''}<button type="button" role="menuitem" data-a="img">${icon(ICONS.dl, 18)}Download as image</button>`;
@@ -93,11 +94,21 @@ export function openShareMenu(btn) {
         const b = e.target.closest('button');
         if (!b)
             return;
+        if (b.dataset.a == 'img') {
+            // Share first: navigator.share needs the live tap, so it must be
+            // invoked before any menu work (closing the menu, toasts, or any
+            // await would burn the gesture window). If the file is not ready
+            // yet, keep the menu open so the user can tap Download again
+            // once it is, instead of closing it and making them reopen it.
+            const willShare = readyImages.has(id);
+            downloadPostImage(id);
+            if (willShare)
+                closeShareMenu();
+            return;
+        }
         closeShareMenu();
         if (b.dataset.a == 'pdf')
             downloadThreadPdf(id);
-        else if (b.dataset.a == 'img')
-            downloadPostImage(id);
         else
             copyLink(id);
     };
@@ -153,6 +164,21 @@ function fixEmbedImages(root) {
         im.style.maxHeight = 'none';
         im.style.objectFit = 'none';
     }
+}
+
+// Start rendering a post to a PNG in the background, if it is not already
+// rendered or rendering. The finished File lands in readyImages.
+function prerenderPostImage(id) {
+    if (readyImages.has(id) || pendingImages.has(id))
+        return;
+    const p = renderPostImageFile(id)
+        .then(f => {
+            if (f)
+                readyImages.set(id, f);
+        })
+        .catch(() => {})
+        .finally(() => pendingImages.delete(id));
+    pendingImages.set(id, p);
 }
 
 // Render a post to a PNG File (focused layout, no action row / counts /
@@ -218,9 +244,14 @@ async function renderPostImageFile(id) {
             });
         }));
         fixEmbedImages(wrap);
+        // iOS Safari caps canvas area at about 16.7M pixels; a very tall post
+        // at scale 2 could exceed it and come back blank, so clamp the scale.
+        const cw = card.offsetWidth || 600;
+        const ch = card.offsetHeight || 600;
+        const scale = Math.min(2, Math.sqrt(16000000 / (cw * ch)));
         const canvas = await html2canvas(card, {
             backgroundColor: solidBackground(card),
-            scale: 2,
+            scale,
             useCORS: true,
         });
         const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
@@ -235,20 +266,17 @@ async function renderPostImageFile(id) {
 }
 
 async function downloadPostImage(id) {
-    showToast('Saving image…');
-    // Use the render started when the menu opened if it is for this tweet;
-    // otherwise render now. Sharing the finished file happens right on the
-    // tap, while it is still a live gesture.
-    let file = null;
-    if (preparedImage && preparedImage.id === id)
-        file = await preparedImage.promise;
-    else
-        file = await renderPostImageFile(id);
-    preparedImage = null;
+    // The file must already be rendered: navigator.share needs a live tap
+    // gesture, and any await before it can outlast the gesture on iOS, so a
+    // tap before the render finishes only asks the user to tap again. There
+    // is no await above the navigator.share call in the ready path.
+    const file = readyImages.get(id);
     if (!file) {
-        showToast('Couldn’t save this image');
+        prerenderPostImage(id);
+        showToast('Preparing image… tap again in a moment');
         return;
     }
+    readyImages.delete(id);
     // On touch devices the anchor download never prompts a save: iOS Safari
     // ignores a programmatic click after async work, so nothing happens.
     // Use the native share sheet instead when the browser can share files;
