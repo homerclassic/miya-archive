@@ -22,6 +22,7 @@ fs.writeFileSync(OUT + '/app.css', min.outputFiles[0].text);
 // HTML
 html = html
   .replace(/(\s*<link rel="stylesheet" href="css\/[^"]+">)+/, '\n  <link rel="stylesheet" href="app.css">')
+  .replace(/\s*<!-- dev-importmap:start[\s\S]*?<!-- dev-importmap:end -->\n/, '')
   .replace('<link rel="modulepreload" href="js/main.js">', '<link rel="modulepreload" href="app.js">')
   .replace('<script type="module" src="js/main.js"></script>', '<script type="module" src="app.js"></script>');
 fs.writeFileSync(OUT + '/index.html', html);

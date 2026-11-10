@@ -75,6 +75,15 @@ function renderLoadError(el) {
 
 const hydrateEmbed = el => getEmbeddedPost(el.dataset.xid, el.dataset.xu).then(r => r.gone != null ? renderUnavailable(el, r.gone) : renderEmbeddedPost(el, r.p), () => renderLoadError(el));
 
+/**
+ * Hydrate every not-yet-hydrated embed inside `root` and resolve when they
+ * have all settled (loaded, unavailable, or error). For renders that never
+ * scroll into view — an off-screen screenshot, for example — the lazy
+ * IntersectionObserver never fires, so the quotes would stay on
+ * "Loading post…". Never rejects.
+ */
+export const hydrateEmbedsIn = root => Promise.allSettled([...root.querySelectorAll('.qx[data-xid]:not([data-embed-state])')].map(hydrateEmbed));
+
 const embedObserver = new IntersectionObserver(es => es.forEach(en => {
     if (en.isIntersecting) {
         embedObserver.unobserve(en.target);

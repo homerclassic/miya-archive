@@ -20,6 +20,11 @@
 
   <!-- Start downloading the archive immediately; js/app.js fetch() reuses this request. -->
   <link rel="preload" href="data/tweets.md" as="fetch" crossorigin>
+  <!-- dev-importmap:start — resolves the bare 'html2canvas' import for `npm run dev`; stripped from dist by build.mjs -->
+  <script type="importmap">
+    {"imports": {"html2canvas": "./node_modules/html2canvas/dist/html2canvas.esm.js"}}
+  </script>
+  <!-- dev-importmap:end -->
   <link rel="modulepreload" href="js/main.js">
 
   <!-- Applies saved preferences before first paint so there is no flash (reader mode, quick search). -->

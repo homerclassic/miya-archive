@@ -339,13 +339,12 @@ function tweetPage(t, idSet, byId) {
         + rtLabel
         + '<div class="fh">'
         + `<a class="avl2" href="../"><span class="av"><img src="../data/miya.png" alt="${AUTHOR_NAME}"></span></a>`
-        + `<div><a class="nm" href="../"><b>${AUTHOR_NAME}</b></a><div class="mu"><a class="nm" href="../">@${AUTHOR_HANDLE}</a></div></div>`
+        + `<div><a class="nm" href="../"><b>${AUTHOR_NAME}</b></a><div class="mu"><a class="nm" href="../">@${AUTHOR_HANDLE}</a> · ${fmtDateShort(t.date)}</div></div>`
         + '</div>\n'
         + replyLine
         + tx
         + mediaHtml(t.media, t.id)
         + quoteHtml(quoted)
-        + `<div class="mu ts">${fmtTime(t.date)} · ${fmtDateShort(t.date)}</div>\n`
         + `<div class="st"><span><b>${t.retweets.toLocaleString()}</b> Retweets</span><span><b>${t.likes.toLocaleString()}</b> Likes</span></div>\n`
         + '</article>\n'
         + viewApp
@@ -361,6 +360,11 @@ const STYLES = `/* Miya Archive — per-tweet pages. The tweet card itself is st
 /* The back arrow is a link, and links are blue by default; in the viewer it
    is a span, so it renders in the text colour. Force it back to black here. */
 .hd0 a.bk { color: var(--tx); }
+/* The timestamp line is gone, so the counts line lost the divider above it
+   (the timestamp's border-bottom). Give it its own top divider, with a
+   margin above it — the border sits at the top edge of .st and its padding
+   is below the border, so without the margin the line touches the text. */
+.tw.fo .st { border-top: 1px solid var(--bd); margin-top: 16px; }
 /* Quote card: a bordered box inside the tweet, like Twitter's quote embed. */
 .qc {
   display: block;
@@ -397,14 +401,14 @@ const STYLES = `/* Miya Archive — per-tweet pages. The tweet card itself is st
    Drop the stats border so there is a single divider above "View in archive".
    (Viewer only: the app still has its action row, so its stats border stays.) */
 .tw.fo .st { border-bottom: 0; }
-/* Layout spacers: the app's #app holds nav + main + aside, and the main
-   column sits offset from centre by the nav/aside widths. The static page
-   has no app chrome, so empty nav/aside spacers keep the column in the
-   exact same place at every viewport width. On mobile the app's nav is a
-   bottom bar, so hide the spacer there (the column is full-width anyway). */
-@media (max-width: 700px) {
-  nav.sp { display: none; }
-}
+/* The static page is one centred column, not the app's three-column flex.
+   The empty nav/aside spacers made the column drift with viewport width —
+   on a narrow window it went full-bleed, so the text stretched across the
+   whole screen. Drop the spacers and centre main outright; on phones it
+   stays full-width, as in the app. */
+#app { display: block; }
+nav.sp, aside.sp { display: none; }
+main { width: 600px; max-width: 100%; margin: 0 auto; }
 `;
 
 

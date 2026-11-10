@@ -1,12 +1,15 @@
 /**
- * Per-tweet actions: share menu (copy link / thread PDF) and "draft on X".
+ * Per-tweet actions: share menu (copy link / thread PDF / post image) and "draft on X".
  */
 
+import html2canvas from 'html2canvas';
 import { $, showToast } from '../core/dom.js';
 import { ICONS, ICON_LINK_PATH, filledIcon, icon } from '../core/icons.js';
 import { state } from '../core/state.js';
 import { collectThreadIds } from '../export/thread-document.js';
 import { downloadThreadPdf } from '../export/thread-export.js';
+import { hydrateEmbedsIn } from '../embeds/x-render.js';
+import { tweetCard } from './tweet-card.js';
 
 /**
  * Named share-menu state: the single source of truth for whether the menu
@@ -54,7 +57,7 @@ function setShareMenu(open, tweetId = null, btn = null) {
 export const closeShareMenu = () => setShareMenu(false);
 
 /**
- * Open the Copy link / Download thread menu next to the share button.
+ * Open the Copy link / Download thread / Download as image menu next to the share button.
  */
 export function openShareMenu(btn) {
     const id = btn.dataset.sh;
@@ -64,7 +67,7 @@ export function openShareMenu(btn) {
     }
     setShareMenu(true, id, btn);
     const m = $('#shm');
-    m.innerHTML = `<button type="button" role="menuitem" data-a="link">${filledIcon(ICON_LINK_PATH, 18)}Copy link</button>${collectThreadIds(id).length > 1 ? `<button type="button" role="menuitem" data-a="pdf">${icon(ICONS.dl, 18)}Download thread as PDF</button>` : ''}`;
+    m.innerHTML = `<button type="button" role="menuitem" data-a="link">${filledIcon(ICON_LINK_PATH, 18)}Copy link</button>${collectThreadIds(id).length > 1 ? `<button type="button" role="menuitem" data-a="pdf">${icon(ICONS.dl, 18)}Download thread as PDF</button>` : ''}<button type="button" role="menuitem" data-a="img">${icon(ICONS.dl, 18)}Download as image</button>`;
     const r = btn.getBoundingClientRect();
     const w = m.offsetWidth;
     const h = m.offsetHeight;
@@ -75,9 +78,153 @@ export function openShareMenu(btn) {
         if (!b)
             return;
         closeShareMenu();
-        b.dataset.a == 'pdf' ? downloadThreadPdf(id) : copyLink(id);
+        if (b.dataset.a == 'pdf')
+            downloadThreadPdf(id);
+        else if (b.dataset.a == 'img')
+            downloadPostImage(id);
+        else
+            copyLink(id);
     };
     m.querySelector('button').focus();
+}
+
+// The first solid background colour walking up from `el` (the card itself is
+// transparent, so this lands on the page background and follows the theme).
+function solidBackground(el) {
+    while (el) {
+        const c = getComputedStyle(el).backgroundColor;
+        if (c && c !== 'rgba(0, 0, 0, 0)' && c !== 'transparent')
+            return c;
+        el = el.parentElement;
+    }
+    return '#ffffff';
+}
+
+/**
+ * Download the post as a PNG image, in the focused post-page layout (the
+ * tweet/<id>.html view): name and handle, text, timestamp, then the
+ * Retweets / Likes line — not the compact feed card. The focused card is
+ * rendered into an off-screen 600px container (the centre-column width),
+ * its action row dropped to match the post page, then screenshotted at 2x.
+ * Works on the site, where the images are same-origin. In the standalone
+ * (file://) the browser taints the canvas when it draws a local image, so
+ * the save fails there and the user gets a toast instead of a file.
+ */
+// html2canvas mishandles object-fit: cover + aspect-ratio / max-height on
+// quote media, stretching single photos. Rebuild the cover crop explicitly:
+// size each embed image to cover its box and clip the overflow, using only
+// absolute positioning and overflow:hidden, which html2canvas renders
+// faithfully. Runs after hydration + image load, before html2canvas.
+function fixEmbedImages(root) {
+    for (const box of root.querySelectorAll('.qx .qgi')) {
+        const im = box.querySelector('img');
+        if (!im || !im.naturalWidth || !im.naturalHeight)
+            continue;
+        const r = box.getBoundingClientRect();
+        if (!r.width || !r.height)
+            continue;
+        const s = Math.max(r.width / im.naturalWidth, r.height / im.naturalHeight);
+        const dw = im.naturalWidth * s, dh = im.naturalHeight * s;
+        box.style.height = r.height + 'px';
+        box.style.aspectRatio = 'auto';
+        box.style.overflow = 'hidden';
+        box.style.position = 'relative';
+        im.style.position = 'absolute';
+        im.style.left = ((r.width - dw) / 2) + 'px';
+        im.style.top = ((r.height - dh) / 2) + 'px';
+        im.style.width = dw + 'px';
+        im.style.height = dh + 'px';
+        im.style.maxHeight = 'none';
+        im.style.objectFit = 'none';
+    }
+}
+
+async function downloadPostImage(id) {
+    const P = state.tweetsById[id];
+    if (!P)
+        return;
+    showToast('Saving image…');
+    // Eager images: the container sits off-screen, so lazy ones would never load.
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:fixed;left:-10000px;top:0;width:600px;';
+    wrap.innerHTML = tweetCard(P, { f: true }).replaceAll('loading="lazy"', 'loading="eager"');
+    // Match the new tweet/<id>.html format: date next to the handle in the
+    // header, no timestamp line. Move the date out of .ts, then drop .ts.
+    const tsEl = wrap.querySelector('.ts');
+    const fhMu = wrap.querySelector('.fh .mu');
+    if (tsEl && fhMu) {
+        const date = tsEl.textContent.split('·')[1]?.trim();
+        if (date)
+            fhMu.append(document.createTextNode(' · ' + date));
+    }
+    wrap.querySelector('.ac')?.remove();
+    wrap.querySelector('.st')?.remove();
+    wrap.querySelector('.ts')?.remove();
+    // Bottom padding: the card has padding-bottom 0, and the timestamp /
+    // counts / action rows are stripped from the shot, so the text is the
+    // last element. Padding on the wrapper alone did not read as a margin,
+    // so pad the card itself, generously.
+    const art = wrap.querySelector('.tw');
+    if (art)
+        art.style.paddingBottom = '24px';
+    // Over file://, local tweet photos would taint the canvas and fail the
+    // save, so drop them from the render (the avatar is a data: URL in the
+    // standalone build, and quote images are https, so those stay). On the
+    // site the photos stay in the shot.
+    if (location.protocol === 'file:')
+        wrap.querySelector('.md')?.remove();
+    document.body.append(wrap);
+    const card = wrap.firstElementChild;
+    try {
+        // Hydrate quote embeds: the off-screen card never scrolls into view,
+        // so the lazy IntersectionObserver never fires and quotes would stay
+        // on "Loading post…". Give X up to 5s, then render whatever state
+        // the embed reached rather than hanging.
+        await Promise.race([
+            hydrateEmbedsIn(wrap),
+            new Promise(r => setTimeout(r, 5000)),
+        ]);
+        // Wait for the avatar / media to finish loading so they are not
+        // blank. The embed renders its own lazy images, so force those
+        // eager here (the card's own were made eager in the HTML string).
+        await Promise.all([...wrap.querySelectorAll('img')].map(im => {
+            if (im.complete)
+                return 0;
+            if (im.loading === 'lazy') {
+                im.loading = 'eager';
+                im.src = im.src;
+            }
+            return new Promise(r => {
+                im.onload = im.onerror = r;
+                setTimeout(r, 3000);
+            });
+        }));
+        fixEmbedImages(wrap);
+        const canvas = await html2canvas(card, {
+            backgroundColor: solidBackground(card),
+            scale: 2,
+            useCORS: true,
+        });
+        canvas.toBlob(blob => {
+            if (!blob) {
+                showToast('Couldn’t save this image');
+                return;
+            }
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `miya-${id}.png`;
+            document.body.append(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+        }, 'image/png');
+    }
+    catch (e) {
+        showToast('Couldn’t save this image');
+    }
+    finally {
+        wrap.remove();
+    }
 }
 
 function copyLink(id) {
