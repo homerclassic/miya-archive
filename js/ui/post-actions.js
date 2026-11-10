@@ -20,6 +20,12 @@ import { tweetCard } from './tweet-card.js';
  */
 const shareMenu = { open: false, tweetId: null, justOpenedUntil: 0 };
 
+// Image prepared while the share menu is open. Rendering a post to a PNG
+// takes seconds (quote hydration, image loads, html2canvas), longer than the
+// tap gesture navigator.share needs, so the render starts when the menu opens
+// and Download as image only has to share the finished file.
+let preparedImage = null; // { id, promise: Promise<File|null> }
+
 /**
  * Single setter for the share menu. Opening creates the #shm element with
  * dataset.id set to the tweet id and marks the invoking button .on;
@@ -86,6 +92,9 @@ export function openShareMenu(btn) {
             copyLink(id);
     };
     m.querySelector('button').focus();
+    // Start rendering the image now, while the menu is open, so the file is
+    // ready when the user taps Download as image.
+    preparedImage = { id, promise: renderPostImageFile(id) };
 }
 
 // The first solid background colour walking up from `el` (the card itself is
@@ -139,11 +148,13 @@ function fixEmbedImages(root) {
     }
 }
 
-async function downloadPostImage(id) {
+// Render a post to a PNG File (focused layout, no action row / counts /
+// timestamp, 24px of bottom padding on the card itself). Returns null on any
+// failure; the caller shows the toast. The off-screen wrap is always removed.
+async function renderPostImageFile(id) {
     const P = state.tweetsById[id];
     if (!P)
-        return;
-    showToast('Saving image…');
+        return null;
     // Eager images: the container sits off-screen, so lazy ones would never load.
     const wrap = document.createElement('div');
     wrap.style.cssText = 'position:fixed;left:-10000px;top:0;width:600px;';
@@ -206,40 +217,53 @@ async function downloadPostImage(id) {
             useCORS: true,
         });
         const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
-        if (!blob) {
-            showToast('Couldn’t save this image');
-            return;
-        }
-        const file = new File([blob], `miya-${id}.png`, { type: 'image/png' });
-        // On touch devices the anchor download never prompts a save: iOS Safari
-        // ignores a programmatic click after async work, so nothing happens.
-        // Use the native share sheet instead when the browser can share files;
-        // that gives Save to Photos / Save to Files.
-        if (matchMedia('(pointer:coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) {
-            try {
-                await navigator.share({ files: [file] });
-                return;
-            } catch (e) {
-                if (e && e.name === 'AbortError')
-                    return; // user dismissed the sheet; do not fall through to a download
-                // Any other error (e.g. the gesture expired during the render)
-                // falls through to the anchor download below.
-            }
-        }
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `miya-${id}.png`;
-        document.body.append(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-    }
-    catch (e) {
-        showToast('Couldn’t save this image');
-    }
-    finally {
+        if (!blob)
+            return null;
+        return new File([blob], `miya-${id}.png`, { type: 'image/png' });
+    } catch (e) {
+        return null;
+    } finally {
         wrap.remove();
     }
+}
+
+async function downloadPostImage(id) {
+    showToast('Saving image…');
+    // Use the render started when the menu opened if it is for this tweet;
+    // otherwise render now. Sharing the finished file happens right on the
+    // tap, while it is still a live gesture.
+    let file = null;
+    if (preparedImage && preparedImage.id === id)
+        file = await preparedImage.promise;
+    else
+        file = await renderPostImageFile(id);
+    preparedImage = null;
+    if (!file) {
+        showToast('Couldn’t save this image');
+        return;
+    }
+    // On touch devices the anchor download never prompts a save: iOS Safari
+    // ignores a programmatic click after async work, so nothing happens.
+    // Use the native share sheet instead when the browser can share files;
+    // that gives Save to Photos / Save to Files.
+    if (matchMedia('(pointer:coarse)').matches && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+            await navigator.share({ files: [file] });
+            return;
+        } catch (e) {
+            if (e && e.name === 'AbortError')
+                return; // user dismissed the sheet; do not fall through to a download
+            // Any other error falls through to the anchor download below.
+        }
+    }
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 
 function copyLink(id) {
